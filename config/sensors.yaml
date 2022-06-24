@@ -1,0 +1,111 @@
+views:
+  front:
+    location: [0.5, 0.0, 1.6]
+    rotation: [0.0, 0.0, 0.0]
+  left_45:
+    location: [0.356, -0.356, 1.6]
+    rotation: [0.0, 0.0, -45.0]
+  left_90:
+    location: [0.0, -0.5, 1.6]
+    rotation: [0.0, 0.0, -90.0]
+  right_45:
+    location: [0.356, 0.356, 1.6]
+    rotation: [0.0, 0.0, 45.0]  
+  right_90:
+    location: [0.0, 0.5, 1.6]
+    rotation: [0.0, 0.0, 90.0]  
+  left_stereo:
+    location: [0.5, -0.2, 1.6]
+    rotation: [0.0, 0.0, 0.0] 
+  center:
+    location: [0.0, 0.0, 1.6]
+    rotation: [0.0, 0.0, 0.0]
+
+image:
+  resolution: [1280, 800]
+  fov: 90
+
+sensors:
+  RGB_camera:
+    enable: True 
+    perfix: "img"
+    format: "jpg"
+    views: 
+      - "front" 
+      - "left_45"
+      - "left_90"
+      - "right_45"
+      - "right_90"
+      - "left_stereo"
+
+  semantic_segmentation:
+    enable: True
+    perfix: "semseg"
+    format: "png"
+    views: 
+      - "front"
+      - "left_45"
+      - "left_90"
+      - "right_45"
+      - "right_90"
+      - "left_stereo"
+
+  instance_segmentation:
+    enable: True
+    perfix: "insseg"
+    format: "png"
+    views: 
+      - "front"
+      - "left_45"
+      - "left_90"
+      - "right_45"
+      - "right_90"
+      - "left_stereo"
+
+  depth:
+    enable: True
+    perfix: "depth"
+    format: "png"
+    views: 
+      - "front"
+      - "left_45"
+      - "left_90"
+      - "right_45"
+      - "right_90"
+      - "left_stereo"
+
+  optical_flow:
+    enable: True
+    perfix: "flow"
+    format: "npy"
+    views: 
+      - "front"
+      - "left_45"
+      - "left_90"
+      - "right_45"
+      - "right_90"
+      - "left_stereo"
+
+  lidar:
+    enable: True
+    perfix: "lidar"
+    format: "ply"
+    channels: 128
+    range: 120
+    points_per_second: 2000000
+    rotation_frequency: 20
+    lower_fov: -10
+    upper_fov: 10
+    view: "center"
+
+  gnss:
+    enable: True
+    perfix: "gnss"
+    format: "txt"
+    view: "center"
+
+  imu:
+    enable: True
+    perfix: "imu"
+    format: "txt"
+    view: "center"

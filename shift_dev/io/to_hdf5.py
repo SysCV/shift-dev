@@ -2,13 +2,14 @@
 
 import argparse
 import glob
+import multiprocessing as mp
+
 import h5py
 import numpy as np
 import tqdm
-import multiprocessing as mp
 
-from shift_dev.utils.logs import setup_logger
-from shift_dev.utils.storage import ZipArchiveReader
+from ..utils.logs import setup_logger
+from ..utils.storage import ZipArchiveReader
 
 
 def convert(zip_filepath, show_progress_bar=False):
@@ -23,6 +24,7 @@ def convert(zip_filepath, show_progress_bar=False):
     except Exception as e:
         logger.error("Cannot create {}. ".format(hdf5_filepath) + e)
         return
+
     file_list = zip_file.get_list()
     if show_progress_bar:
 	    file_list = tqdm.tqdm(file_list)
@@ -35,6 +37,7 @@ def convert(zip_filepath, show_progress_bar=False):
         else:
             g = hdf5_file.create_group(seq)
         g.create_dataset(frame, data=bytes)
+        print(seq, frame)
     hdf5_file.close()
 
 

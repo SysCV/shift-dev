@@ -20,7 +20,7 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 ## Data downloading
 We recommend to download SHIFT using our Python download script. You can select the subset of views, data group, splits and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
 
-```
+```bash
 python download.py --view  "[front, left_stereo]" \    # list of view abbreviation to download
                    --group "[img, semseg]" \          # list of data group abbreviation to download 
                    --split "[train, val, test]" \     # list of splits to download 
@@ -29,8 +29,28 @@ python download.py --view  "[front, left_stereo]" \    # list of view abbreviati
 ```
 
 ## Tools
+### Pack zip file into HDF5
+Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited.
+```bash
+python -m shift_dev.io.to_hdf5 \
+    "path/to/dataset/discrete/images/val/left_45/*.zip" -j 1
+```
+Note: The converted HDF5 file will maintain the same file structure of the zip file, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
 
-### Pack zip files into HDF5 file
+Below is a code snippet for reading one image from a HDF5 file.
+```python
+import io
+import h5py
+import numpy as np
+from PIL import Image
+
+file_key = "0123-abcd/00000001_img_front.jpg"
+with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
+    data = np.array(hdf5[file_key])                     # select the file we want
+    img = Image.open(io.BytesIO(data))                  # same as opening an ordinary png file.
+```
+### Visualization
+
 
 
 

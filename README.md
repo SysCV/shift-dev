@@ -55,13 +55,13 @@ We provide a visualization tool for object-level labels (e.g., bounding box, ins
 
 We also provide a tool to make video with annotations:
 ```bash
-python -m shift_dev.vis.video <seq_id> \
-    -d <path/to/img.zip> \
-    -l <path/to/label.json> \
-    -o <path/for/output> \
-    --view front
+python -m shift_dev.vis.video <seq_id> \    # specify the video sequence
+    -d <path/to/img.zip> \                  # path to the img.zip or its unzipped folder
+    -l <path/to/label.json> \               # path to the corresponding label ({det_2d/det_3d/det_insseg_2d}.json)
+    -o <path/for/output> \                  # output path
+    --view front                            # specify the view, needed to be corresponded with images and label file
 ```
-This command will render an MP4 video with the bounding boxes or instance masks plotted over the background images. Checkout the example of visualization [here](https://www.youtube.com/watch?v=BsqGrDd2Kzw) (starting from 00:10)!
+This command will render an MP4 video with the bounding boxes or instance masks plotted over the background images. Checkout the example [here](https://www.youtube.com/watch?v=BsqGrDd2Kzw) (starting from 00:10)!
 
 
 
@@ -69,8 +69,6 @@ This command will render an MP4 video with the bounding boxes or instance masks 
 <p align="center"> 
   <img src="assert/figures/coor_sys.png" alt="Coordinate systems" width="100%">
 </p>
-
-
 
 
 

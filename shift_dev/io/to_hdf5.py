@@ -2,10 +2,11 @@
 
 import argparse
 import glob
+import multiprocessing as mp
+
 import h5py
 import numpy as np
 import tqdm
-import multiprocessing as mp
 
 from ..utils.logs import setup_logger
 from ..utils.storage import ZipArchiveReader

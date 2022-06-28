@@ -21,18 +21,20 @@ downloads the entire RGB images from the dataset.
 """
 
 import argparse
-import logging
 import json
-import tqdm
-import sys
+import logging
 import os
+import sys
+
+import tqdm
 
 if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
     import urllib.request as urllib
 else:
     import urllib
-import tempfile
+
 import re
+import tempfile
 
 BASE_URL = "https://dl.cv.ethz.ch/shift/"
 DATA_URL = BASE_URL + "discrete/"

@@ -1,8 +1,8 @@
 import hashlib
-import zipfile
-import numpy as np
 import io
+import zipfile
 
+import numpy as np
 from pycocotools import mask as mask_utils  # type: ignore
 
 from ..types.scalabel import RLE

@@ -15,7 +15,7 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 
 ## News
 
-
+- **[June 2020]** We released the DevKit repo!
 
 ## Data downloading
 We recommend to download SHIFT using our Python download script. You can select the subset of views, data group, splits and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
@@ -51,10 +51,21 @@ with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
 ```
 ### Visualization
 
+We provide a visualization tool for object-level labels (e.g., bounding box, instance segmentation). The main rendering functions are provided in `shift_dev/vis/render.py` file. We believe you can reuse many of them for other kinds of visualization. 
+
+We also provide a tool to make video with annotations:
+```bash
+python -m shift_dev.vis.video <seq_id> \
+    -d <path/to/img.zip> \
+    -l <path/to/label.json> \
+    -o <path/for/output> \
+    --view front
+```
+This command will render an MP4 video with the bounding boxes or instance masks plotted over the background images. Checkout the example of visualization [here](https://www.youtube.com/watch?v=BsqGrDd2Kzw) (starting from 00:10)!
 
 
 
-### Coordinate systems
+## Coordinate systems
 <p align="center"> 
   <img src="assert/figures/coor_sys.png" alt="Coordinate systems" width="100%">
 </p>

@@ -11,7 +11,7 @@ from shift_dev.utils.logs import setup_logger
 from shift_dev.utils.storage import ZipArchiveReader
 
 
-def convert(zip_filepath):
+def convert(zip_filepath, show_progress_bar=False):
     try:
         zip_file = ZipArchiveReader(zip_filepath)
     except Exception as e:
@@ -23,7 +23,10 @@ def convert(zip_filepath):
     except Exception as e:
         logger.error("Cannot create {}. ".format(hdf5_filepath) + e)
         return
-    for f in zip_file.get_list():
+    file_list = zip_file.get_list()
+    if show_progress_bar:
+	    file_list = tqdm.tqdm(file_list)
+    for f in file_list:
         seq, frame = f.split("/")
         file_content = zip_file.get_file(f)
         bytes = np.frombuffer(file_content.read(), dtype="uint8")
@@ -50,9 +53,15 @@ def main():
         exit()
     files = glob.glob(args.files)
     logger.info("Files to convert: " + str(len(files)))
-
-    with mp.Pool(args.jobs) as pool:
-        _ = list(tqdm.tqdm(pool.imap(convert, files), total=len(files)))
+	
+    if args.jobs > 1:
+	    with mp.Pool(args.jobs) as pool:
+		    _ = list(tqdm.tqdm(pool.imap(convert, files), total=len(files)))
+    else:
+        logger.info("Note: You can also run this code using multi-processing by setting `-j` option.")
+        for f in files:
+            logger.info("Processing " + f)
+            convert(f, show_progress_bar=True)
 
 
 if __name__ == "__main__":

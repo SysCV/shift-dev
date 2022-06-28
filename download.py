@@ -9,11 +9,11 @@ Homepage: www.vis.xyz/shift/.
 
 
 Script usage example:
-    python download.py --view  "[front, left_stereo]" \    # list of view abbreviation to download
-                       --group "[img, semseg]" \          # list of data group abbreviation to download 
-                       --split "[train, val, test]" \     # list of split to download 
-                       --framerate "[images, videos]" \   # chooses the desired frame rate (images=1fps, videos=10fps)
-                       dataset_root                       # path where to store the downloaded data
+    python download.py --view  "[front, left_stereo]" \     # list of view abbreviation to download
+                       --group "[img, semseg]" \            # list of data group abbreviation to download 
+                       --split "[train, val, test]" \       # list of split to download 
+                       --framerate "[images, videos]" \     # chooses the desired frame rate (images=1fps, videos=10fps)
+                       dataset_root                         # path where to store the downloaded data
 
 You can set the option to "all" to download the entire data from this option. For example,
     python download.py --view "all" --group "[img]" --split "all" --framerate "[images]" .

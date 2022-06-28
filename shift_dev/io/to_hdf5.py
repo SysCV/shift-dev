@@ -7,8 +7,8 @@ import numpy as np
 import tqdm
 import multiprocessing as mp
 
-from shift_dev.utils.logs import setup_logger
-from shift_dev.utils.storage import ZipArchiveReader
+from ..utils.logs import setup_logger
+from ..utils.storage import ZipArchiveReader
 
 
 def convert(zip_filepath):
@@ -23,7 +23,7 @@ def convert(zip_filepath):
     except Exception as e:
         logger.error("Cannot create {}. ".format(hdf5_filepath) + e)
         return
-    for f in zip_file.get_list():
+    for f in tqdm.tqdm(zip_file.get_list()):
         seq, frame = f.split("/")
         file_content = zip_file.get_file(f)
         bytes = np.frombuffer(file_content.read(), dtype="uint8")
@@ -32,6 +32,7 @@ def convert(zip_filepath):
         else:
             g = hdf5_file.create_group(seq)
         g.create_dataset(frame, data=bytes)
+        print(seq, frame)
     hdf5_file.close()
 
 

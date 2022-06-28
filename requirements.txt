@@ -1,0 +1,6 @@
+h5py==3.1.0
+numpy==1.20.1
+pycocotools==2.0.2
+pydantic==1.8.2
+scalabel==0.3.0
+tqdm==4.38.0

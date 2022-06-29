@@ -2,6 +2,9 @@
 
 This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shift/)'s downloading, conversion, and more!
 
+[**Homepage**](https://www.vis.xyz/shift) | [**Paper (CVPR 2022)**](https://arxiv.org/abs/2206.08367) | [**Poster**](https://github.com/SysCV/shift-dev/blob/main/assert/Poster%20SHIFT.pdf) | [**Talk**](https://www.youtube.com/watch?v=q39gJveIhRc) | [**Demo**](https://www.youtube.com/watch?v=BsqGrDd2Kzw)
+
+
 <div align="center">
 <div></div>
 
@@ -12,6 +15,8 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 |   <img src="assert/figures/bbox2d.png">                 |     <img src="assert/figures/ins.png">            |         <img src="assert/figures/seg.png">           |       <img src="assert/figures/pose.png">      |
 
 </div>
+
+
 
 ## News
 
@@ -70,6 +75,21 @@ This command will render an MP4 video with the bounding boxes or instance masks 
   <img src="assert/figures/coor_sys.png" alt="Coordinate systems" width="100%">
 </p>
 
+
+## Citation
+
+The SHIFT Dataset is made freely available to academic and non-academic entities for research purposes such as academic research, teaching, scientific publications, or personal experimentation. If you use our dataset, we kindly ask you to cite our paper as:
+
+```
+@InProceedings{shift2022,
+    author    = {Sun, Tao and Segu, Mattia and Postels, Janis and Wang, Yuxuan and Van Gool, Luc and Schiele, Bernt and Tombari, Federico and Yu, Fisher},
+    title     = {{SHIFT:} A Synthetic Driving Dataset for Continuous Multi-Task Domain Adaptation},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2022},
+    pages     = {21371-21382}
+}
+```
 
 
 Copyright © 2022, [Tao Sun](https://suniique.com) ([@suniique](https://github.com/suniique)), [ETH VIS Group](https://cv.ethz.ch/).

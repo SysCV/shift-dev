@@ -1,5 +1,7 @@
 import hashlib
 import io
+import os
+import tarfile
 import zipfile
 
 import numpy as np
@@ -20,6 +22,26 @@ class ZipArchiveReader:
 
     def get_list(self):
         return self.file.namelist()
+
+    def close(self):
+        self.file.close()
+
+
+class TarArchiveReader:
+    def __init__(self, filename) -> None:
+        self.file = tarfile.TarFile(filename, 'r')
+        # print(f"Loaded {filename}.")
+        
+    def get_file(self, name):
+        data = self.file.extractfile(name)
+        bytes_io = io.BytesIO(data)
+        return bytes_io
+
+    def extract_file(self, name, output_dir):
+        self.file.extract(name, output_dir)
+
+    def get_list(self):
+        return self.file.getnames()
 
     def close(self):
         self.file.close()

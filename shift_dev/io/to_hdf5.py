@@ -27,7 +27,7 @@ def convert(zip_filepath, show_progress_bar=False):
 
     file_list = zip_file.get_list()
     if show_progress_bar:
-	    file_list = tqdm.tqdm(file_list)
+        file_list = tqdm.tqdm(file_list)
     for f in file_list:
         seq, frame = f.split("/")
         file_content = zip_file.get_file(f)
@@ -37,7 +37,6 @@ def convert(zip_filepath, show_progress_bar=False):
         else:
             g = hdf5_file.create_group(seq)
         g.create_dataset(frame, data=bytes)
-        print(seq, frame)
     hdf5_file.close()
 
 
@@ -56,10 +55,10 @@ def main():
         exit()
     files = glob.glob(args.files)
     logger.info("Files to convert: " + str(len(files)))
-	
+
     if args.jobs > 1:
-	    with mp.Pool(args.jobs) as pool:
-		    _ = list(tqdm.tqdm(pool.imap(convert, files), total=len(files)))
+        with mp.Pool(args.jobs) as pool:
+            _ = list(tqdm.tqdm(pool.imap(convert, files), total=len(files)))
     else:
         logger.info("Note: You can also run this code using multi-processing by setting `-j` option.")
         for f in files:

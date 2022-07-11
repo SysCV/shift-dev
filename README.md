@@ -35,7 +35,7 @@ python download.py --view  "[front, left_stereo]" \    # list of view abbreviati
 
 ## Tools
 ### Pack zip file into HDF5
-Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited.
+Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited. Example command:
 ```bash
 python -m shift_dev.io.to_hdf5 \
     "path/to/dataset/discrete/images/val/left_45/*.zip" -j 1
@@ -54,6 +54,22 @@ with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
     data = np.array(hdf5[file_key])                     # select the file we want
     img = Image.open(io.BytesIO(data))                  # same as opening an ordinary png file.
 ```
+
+### Decompress video files
+For easier retrieval of frames during training, we recommend to decompress all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames.
+
+- To use your local FFmpeg libraries (4.x) is supported but not recommended. You can follow the command example below,
+    ```bash
+    python -m shift_dev.io.decompress_videos \
+        "path/to/dataset/discrete/videos/val/left_45/*.tar" -j 1
+    ```
+
+- To ensure reproducible decompression of videos, we recommend to use our docker image as
+    ```bash
+    docker build -t shift-devkit .
+    docker run -v <path/to/videos/folder_to_convert>:/data shift-devkit
+    ```
+
 ### Visualization
 
 We provide a visualization tool for object-level labels (e.g., bounding box, instance segmentation). The main rendering functions are provided in `shift_dev/vis/render.py` file. We believe you can reuse many of them for other kinds of visualization. 

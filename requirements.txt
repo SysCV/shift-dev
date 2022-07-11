@@ -8,5 +8,4 @@ pydantic==1.8.2
 PyYAML==6.0
 scalabel==0.3.0
 scikit_image==0.18.3
-skimage==0.0
 tqdm==4.38.0

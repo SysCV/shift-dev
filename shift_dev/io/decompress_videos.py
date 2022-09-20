@@ -8,7 +8,7 @@ from functools import partial
 
 import cv2
 
-if cv2.__version__[0] != '4':
+if cv2.__version__[0] != "4":
     print("Please upgrade your OpenCV package to 4.x.")
     exit(1)
 
@@ -30,9 +30,9 @@ def convert(tar_filepath, tmp_dir, show_progress_bar=False):
     if show_progress_bar:
         file_list = tqdm.tqdm(file_list)
     for f in file_list:
-        if f.endswith('.mp4'):
+        if f.endswith(".mp4"):
             output_dir = os.path.join(
-                tar_filepath.replace('.tar', ''), f.replace('.mp4', '')
+                tar_filepath.replace(".tar", ""), f.replace(".mp4", "")
             )
             os.makedirs(output_dir, exist_ok=True)
             convert_from_tar(tar_file, f, output_dir, tmp_dir)
@@ -47,8 +47,7 @@ def convert_from_tar(tar_file, video_name, output_dir, tmp_dir):
     while video.isOpened():
         ret, frame = video.read()
         if ret:
-            cv2.imwrite(os.path.join(
-                output_dir, "{:08d}.png".format(frame_id)), frame)
+            cv2.imwrite(os.path.join(output_dir, "{:08d}.png".format(frame_id)), frame)
             frame_id += 1
         else:
             break
@@ -58,15 +57,16 @@ def convert_from_tar(tar_file, video_name, output_dir, tmp_dir):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Decompress tar files of videos into image frames.")
-    parser.add_argument(
-        "files", type=str, help="File pattern to match tar files."
+        description="Decompress tar files of videos into image frames."
     )
+    parser.add_argument("files", type=str, help="File pattern to match tar files.")
     parser.add_argument(
         "-j", "--jobs", default=1, type=int, help="Number of jobs to run in parallel."
     )
     parser.add_argument(
-        "--tmp_dir", default="/tmp/shift-dataset/", help="Temporary folder for decompressed video files."
+        "--tmp_dir",
+        default="/tmp/shift-dataset/",
+        help="Temporary folder for decompressed video files.",
     )
     args = parser.parse_args()
 
@@ -83,7 +83,8 @@ def main():
             _ = list(tqdm.tqdm(pool.imap(convert_fn, files), total=len(files)))
     else:
         logger.info(
-            "Note: You can also run this code using multi-processing by setting `-j` option.")
+            "Note: You can also run this code using multi-processing by setting `-j` option."
+        )
         for f in files:
             logger.info("Processing " + f)
             convert(f, args.tmp_dir, show_progress_bar=True)

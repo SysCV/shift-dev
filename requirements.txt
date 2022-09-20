@@ -1,6 +1,6 @@
 h5py==3.1.0
 matplotlib==3.3.3
-numpy==1.20.1
+numpy==1.20.3
 opencv_python==4.5.2.54
 Pillow==9.1.1
 pycocotools==2.0.2

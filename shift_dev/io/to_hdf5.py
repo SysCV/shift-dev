@@ -42,9 +42,7 @@ def convert(zip_filepath, show_progress_bar=False):
 
 def main():
     parser = argparse.ArgumentParser(description="Convert zip files to HDF5 files.")
-    parser.add_argument(
-        "files", type=str, help="File pattern to match zip files."
-    )
+    parser.add_argument("files", type=str, help="File pattern to match zip files.")
     parser.add_argument(
         "-j", "--jobs", default=1, type=int, help="Number of jobs to run in parallel."
     )
@@ -60,7 +58,9 @@ def main():
         with mp.Pool(args.jobs) as pool:
             _ = list(tqdm.tqdm(pool.imap(convert, files), total=len(files)))
     else:
-        logger.info("Note: You can also run this code using multi-processing by setting `-j` option.")
+        logger.info(
+            "Note: You can also run this code using multi-processing by setting `-j` option."
+        )
         for f in files:
             logger.info("Processing " + f)
             convert(f, show_progress_bar=True)

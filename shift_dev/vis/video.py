@@ -1,52 +1,22 @@
 import argparse
-import json
 import os
 
 import cv2
 import numpy as np
 import tqdm
 import yaml
-from PIL import Image
 
-from ..utils.storage import ZipArchiveReader
-from .render import LabelViewer, UIConfig
-from ..types.scalabel import Frame
+from .base import _BaseRender
+from .utils import LabelViewer, UIConfig
 
 
-class VideoRender:
+class VideoRender(_BaseRender):
     def __init__(self, data_dir, label_path, sensor_cfg, fps, views=None):
-        self.data_dir = data_dir
-        self.label_path = label_path
-        if data_dir.endswith(".zip"):
-            self.zip = ZipArchiveReader(self.data_dir)
-        else:
-            self.zip = None
+        super().__init__(data_dir, label_path)
         self.fps = fps
         self.views = views
         self.cfg = sensor_cfg
         self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-
-    def read_scalabel(self, video):
-        scalabel = json.load(open(self.label_path))
-        results = []
-        for frame in scalabel["frames"]:
-            if frame["videoName"] == video:
-                results.append(Frame.parse_obj(frame))
-        return results
-
-    def read_image(self, video: str, frame: int, group: str, view: str, ext: str):
-        filename = f"{frame:08d}_{group}_{view}.{ext}"
-        filepath = os.path.join(self.data_dir, video, filename)
-        try:
-            if self.zip is None:
-                img = Image.open(filepath)
-            else:
-                img = Image.open(self.zip.get_file(video + "/" + filename))
-        except OSError as e:
-            print(e)
-            return None
-        img = np.asarray(img)
-        return img[:, :, :3]  # RGB(A) -> RGB
 
     def render_sequence(
         self, vidoe_name, view, type, output_path="", convert_to_gray=False, alpha=0.5
@@ -56,7 +26,7 @@ class VideoRender:
         writer = cv2.VideoWriter(output_path, self.fourcc, fps, (1280, 800))
         frames = self.read_scalabel(vidoe_name)
         for frame in tqdm.tqdm(frames):
-            frame_number = int(frame.name.split('_')[0])
+            frame_number = int(frame.name.split("_")[0])
             img = self.read_image(vidoe_name, frame_number, "img", view, "jpg")
             if convert_to_gray:
                 img_g = np.repeat(
@@ -110,7 +80,9 @@ class VideoRender:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Convert zip files to HDF5 files.")
+    parser = argparse.ArgumentParser(
+        description="An offline label visualizer for Scalable file."
+    )
     parser.add_argument("seq_id", type=str, help="Sequence to be visualized.")
     parser.add_argument(
         "-d",
@@ -143,10 +115,7 @@ def main():
         help="Path to store the output video.",
     )
     parser.add_argument(
-        "--fps",
-        default=10,
-        type=int,
-        help="Framerate of the video.",
+        "--fps", default=10, type=int, help="Framerate of the video.",
     )
     parser.add_argument(
         "--no_gray_background",
@@ -156,7 +125,9 @@ def main():
     args = parser.parse_args()
 
     cfg = yaml.safe_load(open("config/sensors.yaml"))
-    render = VideoRender(args.data_dir, args.label_path, cfg, args.fps, views=[args.view])
+    render = VideoRender(
+        args.data_dir, args.label_path, cfg, args.fps, views=[args.view]
+    )
     os.makedirs(args.output_dir, exist_ok=True)
     if args.type is None:
         label_filename = args.label_path

@@ -1,4 +1,3 @@
-
 """An offline label visualizer for Scalable file.
 
 Works for 2D / 3D bounding box, segmentation masks, etc.
@@ -11,7 +10,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import matplotlib
 
-matplotlib.use('agg')
+matplotlib.use("agg")
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -21,20 +20,29 @@ from matplotlib.font_manager import FontProperties
 from scalabel.common.typing import NDArrayF64, NDArrayU8
 from scalabel.label.transforms import rle_to_mask
 from scalabel.label.typing import Config, Edge, Frame, Intrinsics, Label, Node
-from scalabel.label.utils import (check_crowd, check_ignored, check_occluded,
-                                  check_truncated, get_leaf_categories,
-                                  get_matrix_from_intrinsics)
+from scalabel.label.utils import (
+    check_crowd,
+    check_ignored,
+    check_occluded,
+    check_truncated,
+    get_leaf_categories,
+    get_matrix_from_intrinsics,
+)
 from scalabel.vis.geometry import Label3d, vector_3d_to_2d
-from scalabel.vis.helper import (gen_2d_rect, gen_3d_cube, gen_graph_edge,
-                                 gen_graph_point, poly2patch, random_color)
+from scalabel.vis.helper import (
+    gen_2d_rect,
+    gen_3d_cube,
+    gen_graph_edge,
+    gen_graph_point,
+    poly2patch,
+    random_color,
+)
 from skimage.transform import resize
 
 # Necessary due to Queue being generic in stubs but not at runtime
 # https://mypy.readthedocs.io/en/stable/runtime_troubles.html#not-generic-runtime
 if TYPE_CHECKING:
-    DisplayDataQueue = Queue[  # pylint: disable=unsubscriptable-object
-        DisplayData
-    ]
+    DisplayDataQueue = Queue[DisplayData]  # pylint: disable=unsubscriptable-object
 else:
     DisplayDataQueue = Queue
 
@@ -128,9 +136,7 @@ class LabelViewer:
     """
 
     def __init__(
-        self,
-        ui_cfg: UIConfig = UIConfig(),
-        label_cfg: Optional[Config] = None,
+        self, ui_cfg: UIConfig = UIConfig(), label_cfg: Optional[Config] = None,
     ) -> None:
         """Initialize the label viewer."""
         self.ui_cfg = ui_cfg
@@ -139,9 +145,7 @@ class LabelViewer:
         self._category_colors: Optional[Dict[str, NDArrayF64]] = None
         if label_cfg:
             self._category_colors = {
-                c.name: (np.asarray(c.color) / 255)
-                if c.color
-                else random_color()
+                c.name: (np.asarray(c.color) / 255) if c.color else random_color()
                 for c in get_leaf_categories(label_cfg.categories)
             }
 
@@ -163,11 +167,13 @@ class LabelViewer:
     def save(self, out_path: str) -> None:  # pylint: disable=no-self-use
         """Save the visualization."""
         plt.savefig(out_path, dpi=self.ui_cfg.dpi)
-        
+
     def to_numpy(self):
         self.fig.canvas.draw()
         ncols, nrows = self.fig.canvas.get_width_height()
-        img = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8).reshape(nrows, ncols, 3)
+        img = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8).reshape(
+            nrows, ncols, 3
+        )
         return img
 
     def draw(  # pylint: disable=too-many-arguments
@@ -226,11 +232,7 @@ class LabelViewer:
     def _get_label_color(self, label: Label) -> NDArrayF64:
         """Get color by id (if not found, then create a random color)."""
         category = label.category
-        if (
-            self._category_colors
-            and category
-            and category in self._category_colors
-        ):
+        if self._category_colors and category and category in self._category_colors:
             return self._category_colors[category]
 
         label_id = label.id
@@ -297,9 +299,7 @@ class LabelViewer:
         for label in labels:
             if label.box2d is not None:
                 color = self._get_label_color(label).tolist()
-                for result in gen_2d_rect(
-                    label, color, int(2 * self.ui_cfg.scale)
-                ):
+                for result in gen_2d_rect(label, color, int(2 * self.ui_cfg.scale)):
                     self.ax.add_patch(result)
 
                 if with_tags:
@@ -330,8 +330,7 @@ class LabelViewer:
                 if with_tags:
                     label3d = Label3d.from_box3d(label.box3d)
                     point_1 = vector_3d_to_2d(
-                        label3d.vertices[-1],
-                        get_matrix_from_intrinsics(intrinsics),
+                        label3d.vertices[-1], get_matrix_from_intrinsics(intrinsics),
                     )
                     x1, y1 = point_1[0], point_1[1]
                     self._draw_label_attributes(label, x1, y1 - 4)
@@ -365,16 +364,10 @@ class LabelViewer:
 
                 if with_ctrl_points:
                     self._draw_ctrl_points(
-                        poly.vertices,
-                        poly.types,
-                        color,
-                        alpha,
-                        ctrl_point_size,
+                        poly.vertices, poly.types, color, alpha, ctrl_point_size,
                     )
 
-                patch_vertices: NDArrayF64 = np.array(
-                    poly.vertices, dtype=np.float64
-                )
+                patch_vertices: NDArrayF64 = np.array(poly.vertices, dtype=np.float64)
                 x1 = min(np.min(patch_vertices[:, 0]), x1)
                 y1 = min(np.min(patch_vertices[:, 1]), y1)
                 x2 = max(np.max(patch_vertices[:, 0]), x2)
@@ -382,9 +375,7 @@ class LabelViewer:
 
             # Show attributes
             if with_tags:
-                self._draw_label_attributes(
-                    label, x1 + (x2 - x1) * 0.4, y1 - 3.5
-                )
+                self._draw_label_attributes(label, x1 + (x2 - x1) * 0.4, y1 - 3.5)
 
     def _draw_ctrl_points(
         self,
@@ -401,9 +392,7 @@ class LabelViewer:
 
             # Add the point first
             self.ax.add_patch(
-                mpatches.Circle(
-                    vert, ctrl_point_size, alpha=alpha, color=color
-                )
+                mpatches.Circle(vert, ctrl_point_size, alpha=alpha, color=color)
             )
             # Draw the dashed line to the previous vertex.
             if vert_type == "C":
@@ -412,10 +401,7 @@ class LabelViewer:
                 else:
                     vert_prev = vertices[idx - 1]
                 edge: NDArrayF64 = np.concatenate(
-                    [
-                        np.array(vert_prev)[None, ...],
-                        np.array(vert)[None, ...],
-                    ],
+                    [np.array(vert_prev)[None, ...], np.array(vert)[None, ...],],
                     axis=0,
                 )
                 self.ax.add_patch(
@@ -440,10 +426,7 @@ class LabelViewer:
 
                 if type_next == "L":
                     edge = np.concatenate(
-                        [
-                            np.array(vert_next)[None, ...],
-                            np.array(vert)[None, ...],
-                        ],
+                        [np.array(vert_next)[None, ...], np.array(vert)[None, ...],],
                         axis=0,
                     )
                     self.ax.add_patch(
@@ -494,22 +477,17 @@ class LabelViewer:
 
             color: NDArrayF64 = self._get_label_color(label) * 255
             bitmask = resize(
-                rle_to_mask(label.rle),
-                (self.ui_cfg.height, self.ui_cfg.width),
+                rle_to_mask(label.rle), (self.ui_cfg.height, self.ui_cfg.width),
             )
             mask = np.repeat(bitmask[:, :, np.newaxis], 3, axis=2)
 
             # Non-zero values correspond to colors for each label
-            combined_mask = np.where(
-                mask, color.astype(np.uint8), combined_mask
-            )
+            combined_mask = np.where(mask, color.astype(np.uint8), combined_mask)
 
         img: NDArrayU8 = image * 255
         self.ax.imshow(
             np.where(
-                combined_mask > 0,
-                combined_mask.astype(np.uint8),
-                img.astype(np.uint8),
+                combined_mask > 0, combined_mask.astype(np.uint8), img.astype(np.uint8),
             ),
             alpha=alpha,
         )

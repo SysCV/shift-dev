@@ -54,6 +54,7 @@ VIEWS = [
     ("right_45", "Right 45°"),
     ("right_90", "Right 90°"),
     ("left_stereo", "Front (Stereo)"),
+    ("center", "Center (for LiDAR)"),
 ]
 
 DATA_GROUPS = [
@@ -64,6 +65,8 @@ DATA_GROUPS = [
     ("det_insseg_2d", "json", "Instance Segmentation"),
     ("flow", "zip", "Optical Flow"),
     ("depth", "zip", "Depth Maps"),
+    ("seq", "csv", "Sequence Info"),
+    ("lidar", "zip", "LiDAR Point Cloud"),
 ]
 
 
@@ -89,6 +92,8 @@ def setup_logger():
 
 
 def get_url(rate, split, view, group, ext):
+    if rate == "videos" and group in ["img", "semseg"]:
+        ext = "tar"
     url = DATA_URL + "{rate}/{split}/{view}/{group}.{ext}".format(
         rate=rate, split=split, view=view, group=group, ext=ext
     )
@@ -182,6 +187,10 @@ def main():
     total_files = len(frame_rates) * len(splits) * len(views) * len(data_groups)
     logger.info("Number of files to download: " + str(total_files))
 
+    if "lidar" in data_groups and views != ["center"]:
+        logger.error("LiDAR data only available for Center view!")
+        exit(1)
+
     for rate, rate_name in frame_rates:
         for split, split_name in splits:
             for view, view_name in views:
@@ -192,7 +201,11 @@ def main():
                     )
                     logger.info(
                         "Downloading {rate} for {split} of {view} view. Data group: {group}.".format(
-                            rate=rate_name, split=split_name, view=view_name, group=group_name, url=url
+                            rate=rate_name,
+                            split=split_name,
+                            view=view_name,
+                            group=group_name,
+                            url=url,
                         )
                     )
                     try:

@@ -24,6 +24,7 @@ import argparse
 import logging
 import os
 import sys
+import tempfile
 
 import tqdm
 
@@ -32,7 +33,6 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
 else:
     import urllib
 
-import tempfile
 
 BASE_URL = "https://dl.cv.ethz.ch/shift/"
 DATA_URL = BASE_URL + "discrete/"

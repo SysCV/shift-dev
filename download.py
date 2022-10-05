@@ -21,7 +21,6 @@ downloads the entire RGB images from the dataset.
 """
 
 import argparse
-import json
 import logging
 import os
 import sys
@@ -33,7 +32,6 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
 else:
     import urllib
 
-import re
 import tempfile
 
 BASE_URL = "https://dl.cv.ethz.ch/shift/"
@@ -189,7 +187,7 @@ def main():
 
     if "lidar" in data_groups and views != ["center"]:
         logger.error("LiDAR data only available for Center view!")
-        exit(1)
+        sys.exit(1)
 
     for rate, rate_name in frame_rates:
         for split, split_name in splits:

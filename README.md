@@ -30,6 +30,7 @@ python download.py --view  "[front, left_stereo]" \    # list of view abbreviati
                    --group "[img, semseg]" \          # list of data group abbreviation to download 
                    --split "[train, val, test]" \     # list of splits to download 
                    --framerate "[images, videos]" \   # chooses the desired frame rate (images=1fps, videos=10fps)
+                   --shift "discrete" \               # type of domain shifts. Options: discrete, continuous/1x, continuous/10x, continuous/100x 
                    dataset_root                       # path where to store the downloaded data
 ```
 
@@ -37,8 +38,9 @@ python download.py --view  "[front, left_stereo]" \    # list of view abbreviati
 ### Pack zip file into HDF5
 Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited. Example command:
 ```bash
-python -m shift_dev.io.to_hdf5 \
-    "path/to/dataset/discrete/images/val/left_45/*.zip" -j 1
+python -m shift_dev.io.to_hdf5 "discrete/images/val/left_45/*.zip" --zip -j 1
+# or
+python -m shift_dev.io.to_hdf5 "discrete/images/val/left_45/img/" -j 1
 ```
 Note: The converted HDF5 file will maintain the same file structure of the zip file, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
 
@@ -60,15 +62,15 @@ For easier retrieval of frames during training, we recommend to decompress all v
 
 - To use your local FFmpeg libraries (4.x) is supported but not recommended. You can follow the command example below,
     ```bash
-    python -m shift_dev.io.decompress_videos \
-        "path/to/dataset/discrete/videos/val/left_45/*.tar" -j 1
+    python -m shift_dev.io.decompress_videos "discrete/videos/val/left_45/*.tar" -j 1
     ```
 
 - To ensure reproducible decompression of videos, we recommend to use our docker image as
     ```bash
     docker build -t shift-devkit .
-    docker run -v <path/to/videos/folder_to_convert>:/data shift-devkit
+    docker run -v <path/to/data>:/data shift-devkit
     ```
+  The `<path/to/data>` means the root path under which all tar files will be processed recursively.
 
 ### Visualization
 

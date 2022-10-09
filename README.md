@@ -35,11 +35,11 @@ python download.py --view  "[front, left_stereo]" \   # list of view abbreviatio
                    --shift "discrete" \               # type of domain shifts. Options: discrete, continuous/1x, continuous/10x, continuous/100x 
                    dataset_root                       # path where to store the downloaded data
 ```
-Example
+### Example
 
-The command below downloads the entire RGB images and semantic segmentation from the discrete shift data.
+The command below downloads the entire RGB images and 2D bounding boxes from the discrete shift data.
 ```bash
-python download.py --view "all" --group "[img, semseg]" --split "all" --framerate "[images]" ./data
+python download.py --view "all" --group "[img, det_2d]" --split "all" --framerate "[images]" ./data
 ```
 
 

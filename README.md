@@ -20,9 +20,11 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 
 ## News
 
+- **[Sept 2020]** We released visualization scripts for annotation and sensor pose (issue https://github.com/SysCV/shift-dev/issues/6).
 - **[June 2020]** We released the DevKit repo!
 
-## Data downloading
+
+## Downloading
 We recommend to download SHIFT using our Python download script. You can select the subset of views, data group, splits and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
 
 ```bash
@@ -33,6 +35,13 @@ python download.py --view  "[front, left_stereo]" \   # list of view abbreviatio
                    --shift "discrete" \               # type of domain shifts. Options: discrete, continuous/1x, continuous/10x, continuous/100x 
                    dataset_root                       # path where to store the downloaded data
 ```
+Example
+
+The command below downloads the entire RGB images and semantic segmentation from the discrete shift data.
+```bash
+python download.py --view "all" --group "[img, semseg]" --split "all" --framerate "[images]" ./data
+```
+
 
 ## Tools
 ### Pack zip file into HDF5

@@ -13,6 +13,7 @@ Script usage example:
                        --group "[img, semseg]" \            # list of data group abbreviation to download 
                        --split "[train, val, test]" \       # list of split to download 
                        --framerate "[images, videos]" \     # chooses the desired frame rate (images=1fps, videos=10fps)
+                       --shift "discrete" \                 # type of domain shifts. Options: discrete, continuous/1x, continuous/10x, continuous/100x 
                        dataset_root                         # path where to store the downloaded data
 
 You can set the option to "all" to download the entire data from this option. For example,
@@ -35,7 +36,6 @@ else:
 
 
 BASE_URL = "https://dl.cv.ethz.ch/shift/"
-DATA_URL = BASE_URL + "discrete/"
 
 FRAME_RATES = [("images", "images (1 fps)"), ("videos", "videos (10 fps)")]
 
@@ -77,8 +77,7 @@ class ProgressBar(tqdm.tqdm):
 
 def setup_logger():
     log_formatter = logging.Formatter(
-        "[%(asctime)s] SHIFT Downloader - %(levelname)s - %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
+        "[%(asctime)s] SHIFT Downloader - %(levelname)s - %(message)s", datefmt="%m/%d/%Y %H:%M:%S",
     )
     logger = logging.getLogger("logger")
     logger.setLevel(logging.DEBUG)
@@ -89,11 +88,16 @@ def setup_logger():
     return logger
 
 
-def get_url(rate, split, view, group, ext):
-    if rate == "videos" and group in ["img", "semseg"]:
-        ext = "tar"
-    url = DATA_URL + "{rate}/{split}/{view}/{group}.{ext}".format(
+def get_url_discrete(rate, split, view, group, ext):
+    url = BASE_URL + "discrete/{rate}/{split}/{view}/{group}.{ext}".format(
         rate=rate, split=split, view=view, group=group, ext=ext
+    )
+    return url
+
+
+def get_url_continuous(rate, shift_length, split, view, group, ext):
+    url = BASE_URL + "continuous/{rate}/{shift_length}/{split}/{view}/{group}.{ext}".format(
+        rate=rate, shift_length=shift_length, split=split, view=view, group=group, ext=ext
     )
     return url
 
@@ -117,9 +121,7 @@ def parse_options(option_str, bounds, name):
     for option in option_list:
         if option not in candidates:
             logger.info(
-                "Invalid option '{option}' for '{name}'. ".format(
-                    option=option, name=name
-                )
+                "Invalid option '{option}' for '{name}'. ".format(option=option, name=name)
                 + "Please check the download document (https://www.vis.xyz/shift/download/)."
             )
         else:
@@ -127,11 +129,9 @@ def parse_options(option_str, bounds, name):
     if len(used) == 0:
         logger.error(
             "No '{name}' is specified to download. ".format(name=name)
-            + "If you want to download all {name}s, please use '--{name} all'.".format(
-                name=name
-            )
+            + "If you want to download all {name}s, please use '--{name} all'.".format(name=name)
         )
-        exit(1)
+        sys.exit(1)
     return used
 
 
@@ -153,21 +153,18 @@ def download_file(url, out_file):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Downloads SHIFT Dataset public release."
-    )
+    parser = argparse.ArgumentParser(description="Downloads SHIFT Dataset public release.")
     parser.add_argument("out_dir", help="output directory in which to store the data.")
+    parser.add_argument("--split", type=str, default="", help="specific splits to download.")
+    parser.add_argument("--view", type=str, default="", help="specific views to download.")
+    parser.add_argument("--group", type=str, default="", help="specific data groups to download.")
+    parser.add_argument("--framerate", type=str, default="", help="specific frame rate to download.")
     parser.add_argument(
-        "--split", type=str, default="", help="specific splits to download."
-    )
-    parser.add_argument(
-        "--view", type=str, default="", help="specific views to download."
-    )
-    parser.add_argument(
-        "--group", type=str, default="", help="specific data groups to download."
-    )
-    parser.add_argument(
-        "--framerate", type=str, default="", help="specific frame rate to download."
+        "--shift",
+        type=str,
+        default="discrete",
+        choices=["discrete", "continuous/1x", "continuous/10x", "continuous/100x"],
+        help="specific shift type to download.",
     )
     args = parser.parse_args()
 
@@ -193,12 +190,20 @@ def main():
         for split, split_name in splits:
             for view, view_name in views:
                 for group, ext, group_name in data_groups:
-                    url = get_url(rate, split, view, group, ext)
-                    out_file = os.path.join(
-                        args.out_dir, "discrete", rate, split, view, group
-                    )
+                    if rate == "videos" and group in ["img", "semseg"]:
+                        ext = "tar"
+                    if args.shift == "discrete":
+                        url = get_url_discrete(rate, split, view, group, ext)
+                        out_file = os.path.join(args.out_dir, "discrete", rate, split, view, group + "." + ext)
+                    else:
+                        shift_length = args.shift.split("/")[-1]
+                        url = get_url_continuous(rate, shift_length, split, view, group, ext)
+                        out_file = os.path.join(
+                            args.out_dir, "continuous", rate, shift_length, split, view, group + "." + ext
+                        )
                     logger.info(
-                        "Downloading {rate} for {split} of {view} view. Data group: {group}.".format(
+                        "Downloading - Shift: {shift}, Framerate: {rate}, Split: {split}, View: {view}, Data group: {group}.".format(
+                            shift=args.shift,
                             rate=rate_name,
                             split=split_name,
                             view=view_name,

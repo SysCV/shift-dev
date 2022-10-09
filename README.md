@@ -38,11 +38,12 @@ python download.py --view  "[front, left_stereo]" \    # list of view abbreviati
 ### Pack zip file into HDF5
 Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited. Example command:
 ```bash
+# for zip files
 python -m shift_dev.io.to_hdf5 "discrete/images/val/left_45/*.zip" --zip -j 1
-# or
+# or unzipped folder
 python -m shift_dev.io.to_hdf5 "discrete/images/val/left_45/img/" -j 1
 ```
-Note: The converted HDF5 file will maintain the same file structure of the zip file, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
+Note: The converted HDF5 file will maintain the same file structure of the zip file / folder, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
 
 Below is a code snippet for reading one image from a HDF5 file.
 ```python
@@ -70,7 +71,7 @@ For easier retrieval of frames during training, we recommend to decompress all v
     docker build -t shift-devkit .
     docker run -v <path/to/data>:/data shift-devkit
     ```
-  The `<path/to/data>` means the root path under which all tar files will be processed recursively.
+    Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively.
 
 ### Visualization
 

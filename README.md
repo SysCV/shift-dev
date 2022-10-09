@@ -26,7 +26,7 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 We recommend to download SHIFT using our Python download script. You can select the subset of views, data group, splits and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
 
 ```bash
-python download.py --view  "[front, left_stereo]" \    # list of view abbreviation to download
+python download.py --view  "[front, left_stereo]" \   # list of view abbreviation to download
                    --group "[img, semseg]" \          # list of data group abbreviation to download 
                    --split "[train, val, test]" \     # list of splits to download 
                    --framerate "[images, videos]" \   # chooses the desired frame rate (images=1fps, videos=10fps)
@@ -66,9 +66,11 @@ For easier retrieval of frames during training, we recommend to decompress all v
     python -m shift_dev.io.decompress_videos "discrete/videos/val/left_45/*.tar" -j 1
     ```
 
-- To ensure reproducible decompression of videos, we recommend to use our docker image as
+- To ensure reproducible decompression of videos, we recommend to use our Docker image. You could refer to the Docker engine's [installation doc](https://docs.docker.com/engine/install/).
     ```bash
+    # build and install our Docker image
     docker build -t shift-devkit .
+    # run the container
     docker run -v <path/to/data>:/data shift-devkit
     ```
     Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively.

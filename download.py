@@ -192,7 +192,11 @@ def main():
                     )
                     logger.info(
                         "Downloading {rate} for {split} of {view} view. Data group: {group}.".format(
-                            rate=rate_name, split=split_name, view=view_name, group=group_name, url=url
+                            rate=rate_name,
+                            split=split_name,
+                            view=view_name,
+                            group=group_name,
+                            url=url,
                         )
                     )
                     try:

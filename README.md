@@ -35,13 +35,13 @@ python download.py --view  "[front, left_stereo]" \   # list of view abbreviatio
                    --shift "discrete" \               # type of domain shifts. Options: discrete, continuous/1x, continuous/10x, continuous/100x 
                    dataset_root                       # path where to store the downloaded data
 ```
-### Example
-
-The command below downloads the entire RGB images and 2D bounding boxes from the discrete shift data.
+Example: The command below downloads the entire RGB images and 2D bounding boxes from the discrete shift data.
 ```bash
 python download.py --view "all" --group "[img, det_2d]" --split "all" --framerate "[images]" ./data
 ```
 
+### Manually download
+You could find the download links in our [download page](https://www.vis.xyz/shift/download/) or [file server](https://dl.cv.ethz.ch/shift/).
 
 ## Tools
 ### Pack zip file into HDF5

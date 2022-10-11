@@ -1,11 +1,14 @@
 import hashlib
 import io
-import os
 import tarfile
 import zipfile
 
 import numpy as np
-from pycocotools import mask as mask_utils  # type: ignore
+
+try:
+    from pycocotools import mask as mask_utils  # type: ignore
+except Exception as e:
+    print("Error during importing pycocotools:", e, "\nconsider to reinstall the pycocotools manually.")
 
 from ..types.scalabel import RLE
 

@@ -12,7 +12,6 @@ if cv2.__version__[0] != "4":
     print("Please upgrade your OpenCV package to 4.x.")
     exit(1)
 
-import numpy as np
 import tqdm
 
 from ..utils.logs import setup_logger

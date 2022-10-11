@@ -69,8 +69,12 @@ def convert_from_folder(path, show_progress_bar=False):
 
 def main():
     parser = argparse.ArgumentParser(description="Convert zip files to HDF5 files.")
-    parser.add_argument("path", type=str, help="Path pattern to match the zip files or folders.")
-    parser.add_argument("--zip", action="store_true", help="Whether process zip files, or folders.")
+    parser.add_argument(
+        "path", type=str, help="Path pattern to match the zip files or folders."
+    )
+    parser.add_argument(
+        "--zip", action="store_true", help="Whether process zip files, or folders."
+    )
     parser.add_argument(
         "-j", "--jobs", default=1, type=int, help="Number of jobs to run in parallel."
     )

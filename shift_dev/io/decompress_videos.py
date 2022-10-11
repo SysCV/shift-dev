@@ -72,7 +72,7 @@ def main():
     if args.files[-4:] != ".tar":
         logger.error("File pattern must end with '.tar'!")
         exit()
-    files = glob.glob(args.files)
+    files = glob.glob(args.files, recursive=True)
     logger.info("Files to convert: " + str(len(files)))
 
     os.makedirs(args.tmp_dir, exist_ok=True)

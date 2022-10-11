@@ -19,4 +19,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Start decompressing videos
-CMD [ "python", "-m", "shift_dev.io.decompress_videos", "/data/*.tar" ]
+CMD [ "python", "-m", "shift_dev.io.decompress_videos", "/data/**/*.tar" ]

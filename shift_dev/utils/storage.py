@@ -6,6 +6,7 @@ import zipfile
 
 class ZipArchiveReader:
     def __init__(self, filename) -> None:
+        self.filename = filename
         self.file = zipfile.ZipFile(filename, "r")
         # print(f"Loaded {filename}.")
 
@@ -23,6 +24,7 @@ class ZipArchiveReader:
 
 class TarArchiveReader:
     def __init__(self, filename) -> None:
+        self.filename = filename
         self.file = tarfile.TarFile(filename, "r")
         # print(f"Loaded {filename}.")
 
@@ -43,6 +45,7 @@ class TarArchiveReader:
 
 class TarArchiveWriter:
     def __init__(self, filename) -> None:
+        self.filename = filename
         self.file = tarfile.TarFile(filename, "w")
         # print(f"Loaded {filename}.")
 

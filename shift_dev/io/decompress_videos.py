@@ -27,7 +27,7 @@ VIEW_NAMES = [item[0] for item in VIEWS]
 
 def get_suffix(tar_file):
     filepath, filename = os.path.split(tar_file.filename)
-    group_name = filename.removesuffix(".tar")
+    group_name = os.path.splitext(filename)[0]
     view_name = os.path.split(filepath)[1]
     assert (view_name in VIEW_NAMES) and (
         group_name in DATA_GROUP_NAMES
@@ -98,7 +98,7 @@ def convert_to_hdf5(tar_filepath, tmp_dir, show_progress_bar=False):
         logger.error("Cannot open {}. ".format(tar_filepath) + e)
         return
     try:
-        hdf5_filepath = tar_filepath.replace(".tar", ".hdf5")
+        hdf5_filepath = tar_filepath.replace(".tar", "_decompressed.hdf5")
         hdf5_file = h5py.File(hdf5_filepath, mode="w")
     except Exception as e:
         logger.error("Cannot create {}. ".format(hdf5_filepath) + e)
@@ -124,7 +124,7 @@ def convert_to_hdf5(tar_filepath, tmp_dir, show_progress_bar=False):
             )
             os.makedirs(output_dir, exist_ok=True)
             extract_video(tar_file, f, output_dir, tmp_dir)
-            write_to_hdf5(f.removesuffix(".mp4"), output_dir)
+            write_to_hdf5(os.path.splitext(f)[0], output_dir)
             shutil.rmtree(output_dir)
     tar_file.close()
     hdf5_file.close()
@@ -187,7 +187,7 @@ def main():
     files = []
     for file in glob.glob(args.files, recursive=True):
         if file.endswith("_decompressed.tar"):
-            logger.warn(f"Skip a decompressed tar file: {file}.")
+            logger.warning(f"Skip a decompressed tar file: {file}.")
         else:
             files.append(file)
 

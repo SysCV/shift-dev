@@ -68,21 +68,31 @@ with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
 ```
 
 ### Decompress video files
-For easier retrieval of frames during training, we recommend to decompress all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames.
+For easier retrieval of frames during training, we recommend to decompress all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames. 
+
+The mode option (`--mode, -m`) controls the storage type of the decompressed frames. When the mode is set ot `folder` (default option) the frames are extracted to local file systems directly; when mode is set to `zip`, `tar` or `hdf5`, the frames are stored in the corresponding archive file, e.g., `img_decompressed.zip`.  All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<view>.<ext>`.
 
 - To use your local FFmpeg libraries (4.x) is supported but not recommended. You can follow the command example below,
     ```bash
-    python -m shift_dev.io.decompress_videos "discrete/videos/val/left_45/*.tar" -j 1
+    # decompress videos to image frames and store them in a zip archive.
+    python -m shift_dev.io.decompress_videos "discrete/videos/val/front/*.tar" -m "zip" -j 1
+
+    unzip -l "discrete/videos/val/front/img_decompressed.zip" | head
+    #    Length      Date    Time    Name
+    #  ---------  ---------- -----   ----
+    #     131726  10-23-2022 19:53   eba5-a5bd/00000143_img_front.jpg
+    #  ......
     ```
 
 - To ensure reproducible decompression of videos, we recommend to use our Docker image. You could refer to the Docker engine's [installation doc](https://docs.docker.com/engine/install/).
     ```bash
     # build and install our Docker image
-    docker build -t shift-devkit .
-    # run the container
-    docker run -v <path/to/data>:/data shift-devkit
+    docker build -t shift_dataset_decompress .
+
+    # run the container (the mode is set to "hdf5")
+    docker run -v <path/to/data>:/data -e MODE=hdf5 shift_dataset_decompress
     ```
-    Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively.
+    Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively. The mode and number of jobs can be configured through environment variable `MODE` and `JOBS`. 
 
 ### Visualization
 

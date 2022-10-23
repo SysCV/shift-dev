@@ -1,6 +1,7 @@
 """Decompress video into image frames."""
 
 import argparse
+from asyncore import write
 import glob
 import multiprocessing as mp
 import os
@@ -16,7 +17,7 @@ if cv2.__version__[0] != "4":
     exit(1)
 
 from ..utils.logs import setup_logger
-from ..utils.storage import TarArchiveReader, TarArchiveWriter
+from ..utils.storage import TarArchiveReader, TarArchiveWriter, ZipArchiveWriter
 from ..download import DATA_GROUPS, VIEWS
 
 
@@ -59,15 +60,15 @@ def extract_video(tar_file, video_name, output_dir, tmp_dir):
     os.remove(os.path.join(tmp_dir, video_name))
 
 
-def convert_to_tar(tar_filepath, tmp_dir, show_progress_bar=False):
+def convert_to_archive(tar_filepath, tmp_dir, show_progress_bar=False, writer=TarArchiveWriter):
     try:
         tar_file = TarArchiveReader(tar_filepath)
     except Exception as e:
         logger.error("Cannot open {}. ".format(tar_filepath) + e)
         return
     try:
-        out_filepath = tar_filepath.replace(".tar", "_decompressed.tar")
-        tar_writer = TarArchiveWriter(out_filepath)
+        out_filepath = tar_filepath.replace(".tar", f"_decompressed.{writer.default_ext}")
+        archive_writer = writer(out_filepath)
     except Exception as e:
         logger.error("Cannot create {}. ".format(out_filepath) + e)
         return
@@ -82,12 +83,12 @@ def convert_to_tar(tar_filepath, tmp_dir, show_progress_bar=False):
             )
             os.makedirs(output_dir, exist_ok=True)
             extract_video(tar_file, f, output_dir, tmp_dir)
-            tar_writer.add_file(
+            archive_writer.add_file(
                 output_dir, arcname=os.path.basename(f).split(".")[0],
             )
             shutil.rmtree(output_dir)
     tar_file.close()
-    tar_writer.close()
+    archive_writer.close()
 
 
 def convert_to_hdf5(tar_filepath, tmp_dir, show_progress_bar=False):
@@ -150,7 +151,8 @@ def convert_to_folder(tar_filepath, tmp_dir, show_progress_bar=False):
 
 CONVERT_MAP = dict(
     folder=convert_to_folder,
-    tar=convert_to_tar,
+    tar=partial(convert_to_archive, writer=TarArchiveWriter),
+    zip=partial(convert_to_archive, writer=ZipArchiveWriter),
     hdf5=convert_to_hdf5,
 )
 
@@ -165,7 +167,7 @@ def main():
         "--mode",
         type=str,
         default="folder",
-        choices=["folder", "tar", "hdf5"],
+        choices=["folder", "tar", "zip", "hdf5"],
         help="Conversion mode. Defines the type of output.",
     )
     parser.add_argument(
@@ -182,7 +184,13 @@ def main():
         logger.error("File pattern must end with '.tar'!")
         exit()
 
-    files = glob.glob(args.files, recursive=True)
+    files = []
+    for file in glob.glob(args.files, recursive=True):
+        if file.endswith("_decompressed.tar"):
+            logger.warn(f"Skip a decompressed tar file: {file}.")
+        else:
+            files.append(file)
+
     os.makedirs(args.tmp_dir, exist_ok=True)
     logger.info("Files to convert: " + str(len(files)))
     logger.info(f"Starting conversion to {args.mode}")

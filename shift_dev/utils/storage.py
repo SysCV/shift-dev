@@ -41,6 +41,21 @@ class TarArchiveReader:
         self.file.close()
 
 
+class TarArchiveWriter:
+    def __init__(self, filename) -> None:
+        self.file = tarfile.TarFile(filename, "w")
+        # print(f"Loaded {filename}.")
+
+    def add_file(self, name, arcname):
+        self.file.add(name, arcname=arcname)
+
+    def get_list(self):
+        return self.file.getnames()
+
+    def close(self):
+        self.file.close()
+
+
 def string_hash(video):
     sha = hashlib.sha512(video.encode("utf-8"))
     return int(sha.hexdigest(), 16)

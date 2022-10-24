@@ -18,5 +18,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Environment variables
+ENV FILES "/data/**/*.tar"
+ENV MODE folder
+ENV JOBS 1
+
 # Start decompressing videos
-CMD [ "python", "-m", "shift_dev.io.decompress_videos", "/data/**/*.tar" ]
+CMD ["sh", "-c", "python -m shift_dev.io.decompress_videos ${FILES} -m ${MODE} -j ${JOBS}"]

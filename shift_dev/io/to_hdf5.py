@@ -88,7 +88,7 @@ def main():
         if args.path[-1] != "/":
             logger.info("Path pattern must end with '/'!")
             sys.exit(1)
-    files = glob.glob(args.path)
+    files = glob.glob(args.path, recursive=True)
     logger.info("Files/folders to convert: " + str(len(files)))
 
     if args.zip:

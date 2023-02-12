@@ -120,12 +120,6 @@ This command will render an MP4 video with the bounding boxes or instance masks 
 
 
 
-## Coordinate systems
-<p align="center"> 
-  <img src="assert/figures/coor_sys.png" alt="Coordinate systems" width="100%">
-</p>
-
-
 ## Citation
 
 The SHIFT Dataset is made freely available to academic and non-academic entities for research purposes such as academic research, teaching, scientific publications, or personal experimentation. If you use our dataset, we kindly ask you to cite our paper as:

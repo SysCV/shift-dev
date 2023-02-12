@@ -44,18 +44,22 @@ python download.py --view "all" --group "[img, det_2d]" --split "all" --framerat
 You could find the download links in our [download page](https://www.vis.xyz/shift/download/) or [file server](https://dl.cv.ethz.ch/shift/).
 
 ## Tools
-### Pack zip file into HDF5
-Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited. However, if you want ot preprocess the data before using, we don't recommend converting them into HDF5 before the processing, which will complicate the loading. 
+### Packing zip file into HDF5
+Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited. 
 
-Example command:
+However, if you want ot preprocess the data before using, we don't recommend converting them into HDF5 before the processing, which will complicate the loading. 
+
+Example commands:
 ```bash
 # for zip files
-python -m shift_dev.io.to_hdf5 "discrete/images/val/left_45/*.zip" --zip -j 1
+python -m shift_dev.io.to_hdf5 "./data/discrete/**/*.zip" --zip -j 1
+
 # or unzipped folder
-python -m shift_dev.io.to_hdf5 "discrete/images/val/left_45/img/" -j 1
+python -m shift_dev.io.to_hdf5 "./data/discrete/images/val/left_45/img/" -j 1
 ```
 Note: The converted HDF5 file will maintain the same file structure of the zip file / folder, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
 
+### Reading from HDF5 files
 Below is a code snippet for reading one image from a HDF5 file.
 ```python
 import io
@@ -63,10 +67,12 @@ import h5py
 import numpy as np
 from PIL import Image
 
+
 file_key = "0123-abcd/00000001_img_front.jpg"
+
 with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
     data = np.array(hdf5[file_key])                     # select the file we want
-    img = Image.open(io.BytesIO(data))                  # same as opening an ordinary png file.
+    img = Image.open(io.BytesIO(data))                  # same as opening an ordinary png file from IO stream.
 ```
 
 ### Decompress video files
@@ -74,16 +80,9 @@ For easier retrieval of frames during training, we recommend to decompress all v
 
 The mode option (`--mode, -m`) controls the storage type of the decompressed frames. When the mode is set ot `folder` (default option) the frames are extracted to local file systems directly; when mode is set to `zip`, `tar` or `hdf5`, the frames are stored in the corresponding archive file, e.g., `img_decompressed.zip`.  All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<view>.<ext>`.
 
-- To use your local FFmpeg libraries (4.x) is supported but not recommended. You can follow the command example below,
+- To use your local FFmpeg libraries (4.x) is supported. You can follow the command example below, which decompress videos to image frames and store them into a zip archive with the same filename as the tar file.
     ```bash
-    # decompress videos to image frames and store them in a zip archive.
     python -m shift_dev.io.decompress_videos "discrete/videos/val/front/*.tar" -m "zip" -j 1
-
-    unzip -l "discrete/videos/val/front/img_decompressed.zip" | head
-    #    Length      Date    Time    Name
-    #  ---------  ---------- -----   ----
-    #     131726  10-23-2022 19:53   eba5-a5bd/00000143_img_front.jpg
-    #  ......
     ```
 
 - To ensure reproducible decompression of videos, we recommend to use our Docker image. You could refer to the Docker engine's [installation doc](https://docs.docker.com/engine/install/).

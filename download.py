@@ -170,10 +170,8 @@ def main():
 
     print(
         "Welcome to use SHIFT Dataset download script! \n"
-        "By pressing any key to continue you confirm that you have agreed to the SHIFT's user license.\n"
-        "Press any key to continue, or CTRL-C to exit."
+        "By continuing you confirm that you have agreed to the SHIFT's user license.\n"
     )
-    _ = input()
 
     frame_rates = parse_options(args.framerate, FRAME_RATES, "frame rate")
     splits = parse_options(args.split, SPLITS, "split")

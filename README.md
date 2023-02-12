@@ -35,9 +35,14 @@ python download.py --view  "[front, left_stereo]" \   # list of view abbreviatio
                    --shift "discrete" \               # type of domain shifts. Options: discrete, continuous/1x, continuous/10x, continuous/100x 
                    dataset_root                       # path where to store the downloaded data
 ```
-Example: The command below downloads the entire RGB images and 2D bounding boxes from the discrete shift data.
+**Example 1**: Download the entire RGB images and 2D bounding boxes from the discrete shift data.
 ```bash
 python download.py --view "all" --group "[img, det_2d]" --split "all" --framerate "[images]" ./data
+```
+
+**Example 2**: Download the entire front view images and all annotations from the discrete shift data.
+```bash
+python download.py --view "[front]" --group "all" --split "all" --framerate "[images]" ./data
 ```
 
 ### Manually download
@@ -54,7 +59,7 @@ Example commands:
 # for zip files
 python -m shift_dev.io.to_hdf5 "./data/discrete/**/*.zip" --zip -j 1
 
-# or unzipped folder
+# for unzipped folder
 python -m shift_dev.io.to_hdf5 "./data/discrete/images/val/left_45/img/" -j 1
 ```
 Note: The converted HDF5 file will maintain the same file structure of the zip file / folder, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
@@ -78,7 +83,9 @@ with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
 ### Decompress video files
 For easier retrieval of frames during training, we recommend to decompress all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames. 
 
-The mode option (`--mode, -m`) controls the storage type of the decompressed frames. When the mode is set ot `folder` (default option) the frames are extracted to local file systems directly; when mode is set to `zip`, `tar` or `hdf5`, the frames are stored in the corresponding archive file, e.g., `img_decompressed.zip`.  All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<view>.<ext>`.
+The mode option (`--mode, -m`) controls the storage type of the decompressed frames. When the mode is set ot `folder` (default option) the frames are extracted to local file systems directly; when mode is set to `zip`, `tar` or `hdf5`, the frames are stored in the corresponding archive file, e.g., `img_decompressed.zip`.  
+
+All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<view>.<ext>`.
 
 - To use your local FFmpeg libraries (4.x) is supported. You can follow the command example below, which decompress videos to image frames and store them into a zip archive with the same filename as the tar file.
     ```bash

@@ -71,15 +71,14 @@ Below is a code snippet for reading one image from a HDF5 file.
 ```python
 import io
 import h5py
-import numpy as np
 from PIL import Image
 
 
 file_key = "0123-abcd/00000001_img_front.jpg"
 
 with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
-    data = np.array(hdf5[file_key])                     # select the file we want
-    img = Image.open(io.BytesIO(data))                  # same as opening an ordinary png file from IO stream.
+    bytes = bytearray(hdf5[file_key])                     # select the file we want
+    img = Image.open(io.BytesIO(bytes))                  # same as opening an ordinary png file from IO stream.
 ```
 
 ### Decompress video files

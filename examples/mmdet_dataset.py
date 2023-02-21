@@ -152,7 +152,7 @@ class SHIFTDataset(CustomDataset):
         return self.pipeline(results)
 
 
-def main():
+if __name__ == "__main__":
     """Example for loading the SHIFT dataset for instance segmentation."""
 
     dataset = SHIFTDataset(
@@ -175,9 +175,4 @@ def main():
         print("ann_info.track_ids:", data["ann_info"]["track_ids"].shape)
         if "gt_masks" in data:
             print("gt_masks:", data["gt_masks"])
-
         break
-
-
-if __name__ == "__main__":
-    main()

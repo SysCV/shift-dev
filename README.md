@@ -19,7 +19,7 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 
 
 ## News
-- **[Feb 2022]** Reference data loaders for PyTorch and mmdet are released! ([examples](https://github.com/SysCV/shift-dev/blob/main/examples))
+- **[Feb 2023]** Reference data loaders for PyTorch and mmdet are released! ([examples](https://github.com/SysCV/shift-dev/blob/main/examples))
 - **[Sept 2022]** We released visualization scripts for annotation and sensor pose (issue https://github.com/SysCV/shift-dev/issues/6).
 - **[June 2022]** We released the DevKit repo!
 
@@ -47,6 +47,37 @@ python download.py --view "[front]" --group "all" --split "all" --framerate "[im
 
 ### Manually download
 You could find the download links in our [download page](https://www.vis.xyz/shift/download/) or [file server](https://dl.cv.ethz.ch/shift/).
+
+## Data Loaders
+
+We have implemented reference dataset classes for SHIFT. These examples
+show how to load the SHIFT dataset via the PyTorch Dataset ([examples/torch_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/torch_dataset.py)) and CustomDataset in [mmdet](https://github.com/open-mmlab/mmdetection) framework ([examples/mmdet_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/mmdet_dataset.py)).
+
+Below is an example for PyTorch Dataset.
+
+```python
+from shift_dev import SHIFTDataset
+from shift_dev.types import Keys
+from shift_dev.utils.backend import ZipBackend
+
+dataset = SHIFTDataset(
+    data_root="./SHIFT_dataset/",
+    split="train",
+    keys_to_load=[
+        Keys.images,
+        Keys.intrinsics,
+        Keys.boxes2d,
+        Keys.boxes2d_classes,
+        Keys.boxes2d_track_ids,
+        Keys.segmentation_masks,
+    ],
+    views_to_load=["front"],
+    backend=ZipBackend(),  # also supports HDF5Backend(), FileBackend()
+    verbose=True,
+)
+```
+
+
 
 ## Tools
 ### Packing zip file into HDF5
@@ -103,11 +134,6 @@ All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<
     ```
     Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively. The mode and number of jobs can be configured through environment variables `MODE` and `JOBS`. 
 
-
-### Data Loader
-
-We have implemented reference dataset classes for SHIFT. These examples
-show how to load the SHIFT dataset via the PyTorch Dataset ([examples/torch_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/torch_dataset.py)) and CustomDataset in mmdet framework ([examples/mmdet_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/mmdet_dataset.py)).
 ### Visualization
 
 We provide a visualization tool for object-level labels (e.g., bounding box, instance segmentation). The main rendering functions are provided in `shift_dev/vis/render.py` file. We believe you can reuse many of them for other kinds of visualization. 

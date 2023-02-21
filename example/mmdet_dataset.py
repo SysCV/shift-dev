@@ -1,10 +1,10 @@
 """SHIFT dataset for mmdet.
 
 This is a reference code for mmdet style dataset of the SHIFT dataset. Note that
-only single-view 2D detection/tracking is supported. Please refer to the torch 
-version of the dataloader for multi-view multi-task cases.
+only single-view 2D detection, instance segmentation, and tracking are supported.
+Please refer to the torch version of the dataloader for multi-view multi-task cases.
 
-The dataset is based on the CustomDataset class of mmdet-2.20.0.
+The codes are tested in mmdet-2.20.0.
 
 
 Example
@@ -55,6 +55,12 @@ class SHIFTDataset(CustomDataset):
     HEIGHT = 800
 
     def __init__(self, backend_type: str = "file", *args, **kwargs):
+        """Initialize the SHIFT dataset.
+
+        Args:
+            backend_type (str, optional): The type of the backend. Must be one of
+                ['file', 'zip', 'hdf5']. Defaults to "file".
+        """
         super().__init__(*args, **kwargs)
         self.backend_type = backend_type
         if backend_type == "file":
@@ -82,11 +88,14 @@ class SHIFTDataset(CustomDataset):
             bboxes = []
             labels = []
             track_ids = []
+            masks = []
             for label in img_info["labels"]:
                 bbox = label["box2d"]
                 bboxes.append((bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]))
                 labels.append(self.CLASSES.index(label["category"]))
                 track_ids.append(label["id"])
+                if label["mask"] is not None:
+                    masks.append(label["mask"])
 
             data_infos.append(
                 dict(
@@ -97,6 +106,7 @@ class SHIFTDataset(CustomDataset):
                         bboxes=np.array(bboxes).astype(np.float32),
                         labels=np.array(labels).astype(np.int64),
                         track_ids=np.array(track_ids).astype(np.int64),
+                        masks=masks if len(masks) > 0 else None,
                     ),
                 )
             )

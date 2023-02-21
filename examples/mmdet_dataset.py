@@ -9,9 +9,10 @@ The codes are tested in mmdet-2.20.0.
 
 Example
 -------
-Below is an example of how to use the SHIFTDataset class.
+Below is a snippet showing how to add the SHIFTDataset class in mmdet config files.
 
-    >>> dataset = SHIFTDataset(
+    >>> dict(
+    >>>     type='SHIFTDataset',
     >>>     data_root='./SHIFT_dataset/discrete/images'
     >>>     ann_file='train/front/det_2d.json',
     >>>     img_prefix='train/front/img.zip',
@@ -24,11 +25,14 @@ Below is an example of how to use the SHIFTDataset class.
 
 Notes
 -----
-1.  The `backend_type` must be one of ['file', 'zip', 'hdf5'] and the `img_prefix`
+1.  Please copy this file under `mmdet/datasets/` and update the `mmdet/datasets/__init__.py`
+    so that the `SHIFTDataset` class are imported. You can refer to their official tutorial at
+    https://mmdetection.readthedocs.io/en/latest/tutorials/customize_dataset.html.
+2.  The `backend_type` must be one of ['file', 'zip', 'hdf5'] and the `img_prefix`
     must be consistent with the backend_type.
-2.  Since the images are loaded before the pipeline, there is no need to add a 
-    `LoadImageFromFile` module in the pipeline again.
-3.  For instance segmentation please use the `det_insseg_2d.json` for the `ann_file`,
+3.  Since the images are loaded before the pipeline with the selected backend, there is no need
+    to add a `LoadImageFromFile` module in the pipeline again.
+4.  For instance segmentation please use the `det_insseg_2d.json` for the `ann_file`,
     and add a `LoadAnnotations(with_mask=True)` module in the pipeline.
 """
 

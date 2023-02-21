@@ -1,11 +1,14 @@
 """
+This is an mmdet style dataset for the SHIFT dataset. Note that only single-view data is
+supported. Please refer to the torch version of the dataset for multi-view data.
 
-Config example:
+Example for mmdet config file:
 
-    >>> dataset = ScalabelDataset(
+    >>> dataset = SHIFTDataset(
     >>>     data_root='./shift_dataset/discrete/images'
     >>>     ann_file='train/front/det_2d.json',
     >>>     img_prefix='train/front/img',
+    >>>     backend_type='zip',
     >>>     pipeline=[
     >>>        ...
     >>>     ]
@@ -30,6 +33,19 @@ class SHIFTDataset(CustomDataset):
 
     WIDTH = 1280
     HEIGHT = 800
+
+    def __init__(self, backend_type: str = "file", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if backend_type == "file":
+            self.backend = None
+        elif backend_type == "zip":
+            self.backend = ZipBackend()
+        elif backend_type == "hdf5":
+            self.backend = HDF5Backend()
+        else:
+            raise ValueError(
+                f"Unknown backend type: {backend_type}, must be one of ['file', 'zip', 'hdf5']"
+            )
 
     def load_annotations(self, ann_file):
         with open(ann_file, 'r') as f:
@@ -57,12 +73,28 @@ class SHIFTDataset(CustomDataset):
                 )
             )
         return data_infos
+        
+    def get_img(self, idx):
+        if self.backend == "zip":
+            img_bytes = self.backend.get(self.data_infos[idx]['filename'])
+            return mmcv.imfrombytes(img_bytes)
+        elif self.backend == "hdf5":
+            img_bytes = self.backend.get(self.data_infos[idx]['filename'])
+            return mmcv.imfrombytes(img_bytes)
+        else:
+            return mmcv.imread(self.data_infos[idx]['filename'])
+
+    def get_img_info(self, idx):
+        return dict(
+            filename=self.data_infos[idx]['filename'], width=self.WIDTH, height=self.HEIGHT
+        )
 
     def get_ann_info(self, idx):
         return self.data_infos[idx]['ann']
-        
+
     def __getitem__(self, idx):
-        img = mmcv.imread(self.data_infos[idx]['filename'])
+        img = self.get_img(idx)
+        img_info = self.get_img_info(idx)
         ann = self.get_ann_info(idx)
         return self.pipeline(dict(img=img, img_info=img_info, ann_info=ann))
 
@@ -74,6 +106,7 @@ def main():
         data_root='../../SHIFT_dataset/v2/public/discrete/images',
         ann_file='train/front/det_2d.json',
         img_prefix='train/front/img',
+        backend_type="zip",
         pipeline=[],
     )
 

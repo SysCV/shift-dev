@@ -24,7 +24,7 @@ from scalabel.label.utils import (
 from torch import Tensor
 from torch.utils.data import Dataset
 
-from shift_dev.types import AxisMode, DataDict, DictStrAny, Keys, NDArrayU8
+from shift_dev.types import DataDict, DictStrAny, Keys, NDArrayU8
 from shift_dev.utils import Timer, setup_logger
 from shift_dev.utils.backend import DataBackend, FileBackend
 from shift_dev.utils.load import im_decode, ply_decode
@@ -255,7 +255,6 @@ class Scalabel(Dataset, CacheMappingMixin):
             data[Keys.images] = image
             data[Keys.original_hw] = input_hw
             data[Keys.input_hw] = input_hw
-            data[Keys.axis_mode] = AxisMode.OPENCV
             data[Keys.frame_ids] = frame.frameIndex
             # TODO how to properly integrate such metadata?
             data["name"] = frame.name

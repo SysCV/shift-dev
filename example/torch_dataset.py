@@ -40,9 +40,10 @@ def main():
         shuffle=False,
     )
 
+    # Print the dataset size
     print(f"Total number of samples: {len(dataset)}.")
 
-    # Print the tensor shape of the first batch
+    # Print the tensor shape of the first batch.
     for i, batch in enumerate(dataloader):
         print(f"Batch {i}:")
         for k, data in batch["front"].items():

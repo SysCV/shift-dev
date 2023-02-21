@@ -16,6 +16,8 @@ from shift_dev.utils.backend import ZipBackend
 
 
 def main():
+    """Load the SHIFT dataset and print the tensor shape of the first batch."""
+
     dataset = SHIFTDataset(
         data_root='../../SHIFT_dataset/v2/public',
         split="train",
@@ -38,8 +40,9 @@ def main():
         shuffle=False,
     )
 
-    print(f"Number of samples:", len(dataset))
+    print(f"Total number of samples: {len(dataset)}.")
 
+    # Print the tensor shape of the first batch
     for i, batch in enumerate(dataloader):
         print(f"Batch {i}:")
         for k, data in batch["front"].items():

@@ -19,13 +19,13 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 
 
 ## News
-
-- **[Sept 2020]** We released visualization scripts for annotation and sensor pose (issue https://github.com/SysCV/shift-dev/issues/6).
-- **[June 2020]** We released the DevKit repo!
+- **[Feb 2022]** Reference data loaders for PyTorch and mmdet are released! ([examples](https://github.com/SysCV/shift-dev/blob/main/examples))
+- **[Sept 2022]** We released visualization scripts for annotation and sensor pose (issue https://github.com/SysCV/shift-dev/issues/6).
+- **[June 2022]** We released the DevKit repo!
 
 
 ## Downloading
-We recommend to download SHIFT using our Python download script. You can select the subset of views, data group, splits and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
+We recommend downloading SHIFT using our Python download script. You can select the subset of views, data group, splits and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
 
 ```bash
 python download.py --view  "[front, left_stereo]" \   # list of view abbreviation to download
@@ -82,13 +82,13 @@ with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
 ```
 
 ### Decompress video files
-For easier retrieval of frames during training, we recommend to decompress all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames. 
+For easier retrieval of frames during training, we recommend decompressing all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames. 
 
-The mode option (`--mode, -m`) controls the storage type of the decompressed frames. When the mode is set ot `folder` (default option) the frames are extracted to local file systems directly; when mode is set to `zip`, `tar` or `hdf5`, the frames are stored in the corresponding archive file, e.g., `img_decompressed.zip`.  
+The mode option (`--mode, -m`) controls the storage type of the decompressed frames. When the mode is set to `folder` (default option) the frames are extracted to local file systems directly; when the mode is set to `zip`, `tar` or `hdf5`, the frames are stored in the corresponding archive file, e.g., `img_decompressed.zip`.  
 
 All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<view>.<ext>`.
 
-- To use your local FFmpeg libraries (4.x) is supported. You can follow the command example below, which decompress videos to image frames and store them into a zip archive with the same filename as the tar file.
+- To use your local FFmpeg libraries (4.x) is supported. You can follow the command example below, which decompresses videos to image frames and store them into a zip archive with the same filename as the tar file.
     ```bash
     python -m shift_dev.io.decompress_videos "discrete/videos/val/front/*.tar" -m "zip" -j 1
     ```
@@ -101,13 +101,18 @@ All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<
     # run the container (the mode is set to "hdf5")
     docker run -v <path/to/data>:/data -e MODE=hdf5 shift_dataset_decompress
     ```
-    Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively. The mode and number of jobs can be configured through environment variable `MODE` and `JOBS`. 
+    Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively. The mode and number of jobs can be configured through environment variables `MODE` and `JOBS`. 
 
+
+### Data Loader
+
+We have implemented reference dataset classes for SHIFT. These examples
+show how to load the SHIFT dataset via the PyTorch Dataset ([examples/torch_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/torch_dataset.py)) and CustomDataset in mmdet framework ([examples/mmdet_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/mmdet_dataset.py)).
 ### Visualization
 
 We provide a visualization tool for object-level labels (e.g., bounding box, instance segmentation). The main rendering functions are provided in `shift_dev/vis/render.py` file. We believe you can reuse many of them for other kinds of visualization. 
 
-We also provide a tool to make video with annotations:
+We also provide a tool to make videos with annotations:
 ```bash
 python -m shift_dev.vis.video <seq_id> \    # specify the video sequence
     -d <path/to/img.zip> \                  # path to the img.zip or its unzipped folder

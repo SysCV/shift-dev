@@ -1,0 +1,25 @@
+Bootstrap: docker
+From: python:3.8
+Stage: spython-base
+
+%files
+. /opt/app
+
+%post
+cd /opt/app
+
+# Update
+apt -y update
+apt -y install software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
+apt -y install python3-h5py pkg-config libhdf5-dev
+
+# Install FFmpeg 4.3
+apt -y install ffmpeg=7:4.3.4-0+deb11u1
+
+# Install Python libraries
+pip install --no-cache-dir -r requirements.txt
+
+
+%runscript
+cd /opt/app
+exec /bin/bash python -m shift_dev.io.decompress_videos "$@"

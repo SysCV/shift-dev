@@ -8,10 +8,10 @@ import zipfile
 class ArchiveReader:
     def __init__(self, filename) -> None:
         self.filename = filename
-    
+
     def get_list(self):
         raise NotImplementedError
-    
+
     def get_file(self, name):
         raise NotImplementedError
 
@@ -22,10 +22,10 @@ class ArchiveReader:
 class ArchiveWriter:
     def __init__(self, filename) -> None:
         self.filename = filename
-    
+
     def get_list(self):
         raise NotImplementedError
-    
+
     def add_file(self, name, arcname):
         raise NotImplementedError
 

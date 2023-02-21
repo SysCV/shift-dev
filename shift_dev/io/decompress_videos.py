@@ -1,25 +1,26 @@
 """Decompress video into image frames."""
 
 import argparse
-from asyncore import write
 import glob
 import multiprocessing as mp
 import os
-import numpy as np
-import h5py
-from functools import partial
 import shutil
-import tqdm
+from asyncore import write
+from functools import partial
 
 import cv2
+import h5py
+import numpy as np
+import tqdm
+
 if cv2.__version__[0] != "4":
     print("Please upgrade your OpenCV package to 4.x.")
     exit(1)
 
-from ..utils.logs import setup_logger
-from ..utils.storage import TarArchiveReader, TarArchiveWriter, ZipArchiveWriter
 from ..download import DATA_GROUPS, VIEWS
-
+from ..utils.logs import setup_logger
+from ..utils.storage import (TarArchiveReader, TarArchiveWriter,
+                             ZipArchiveWriter)
 
 DATA_GROUP_NAMES = [item[0] for item in DATA_GROUPS]
 VIEW_NAMES = [item[0] for item in VIEWS]
@@ -50,7 +51,10 @@ def extract_video(tar_file, video_name, output_dir, tmp_dir):
         ret, frame = video.read()
         if ret:
             cv2.imwrite(
-                os.path.join(output_dir, "{:08d}_{}_{}.{}".format(frame_id, group_name, view_name, ext)),
+                os.path.join(
+                    output_dir,
+                    "{:08d}_{}_{}.{}".format(frame_id, group_name, view_name, ext),
+                ),
                 frame,
             )
             frame_id += 1
@@ -60,14 +64,18 @@ def extract_video(tar_file, video_name, output_dir, tmp_dir):
     os.remove(os.path.join(tmp_dir, video_name))
 
 
-def convert_to_archive(tar_filepath, tmp_dir, show_progress_bar=False, writer=TarArchiveWriter):
+def convert_to_archive(
+    tar_filepath, tmp_dir, show_progress_bar=False, writer=TarArchiveWriter
+):
     try:
         tar_file = TarArchiveReader(tar_filepath)
     except Exception as e:
         logger.error("Cannot open {}. ".format(tar_filepath) + e)
         return
     try:
-        out_filepath = tar_filepath.replace(".tar", f"_decompressed.{writer.default_ext}")
+        out_filepath = tar_filepath.replace(
+            ".tar", f"_decompressed.{writer.default_ext}"
+        )
         archive_writer = writer(out_filepath)
     except Exception as e:
         logger.error("Cannot create {}. ".format(out_filepath) + e)
@@ -79,12 +87,14 @@ def convert_to_archive(tar_filepath, tmp_dir, show_progress_bar=False, writer=Ta
     for f in file_list:
         if f.endswith(".mp4"):
             output_dir = os.path.join(
-                tar_filepath.replace(".tar", "_tmp"), os.path.basename(f).split(".")[0],
+                tar_filepath.replace(".tar", "_tmp"),
+                os.path.basename(f).split(".")[0],
             )
             os.makedirs(output_dir, exist_ok=True)
             extract_video(tar_file, f, output_dir, tmp_dir)
             archive_writer.add_file(
-                output_dir, arcname=os.path.basename(f).split(".")[0],
+                output_dir,
+                arcname=os.path.basename(f).split(".")[0],
             )
             shutil.rmtree(output_dir)
     tar_file.close()
@@ -120,7 +130,8 @@ def convert_to_hdf5(tar_filepath, tmp_dir, show_progress_bar=False):
     for f in file_list:
         if f.endswith(".mp4"):
             output_dir = os.path.join(
-                tar_filepath.replace(".tar", "_tmp"), os.path.basename(f).split(".")[0],
+                tar_filepath.replace(".tar", "_tmp"),
+                os.path.basename(f).split(".")[0],
             )
             os.makedirs(output_dir, exist_ok=True)
             extract_video(tar_file, f, output_dir, tmp_dir)

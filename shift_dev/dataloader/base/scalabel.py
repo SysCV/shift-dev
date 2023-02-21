@@ -4,55 +4,49 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from collections.abc import Callable, Sequence
-from typing import Union, Any
+from typing import Any, Dict, Union
 
 import numpy as np
 import torch
+from scalabel.label.io import load, load_label_config
+from scalabel.label.transforms import (
+    box2d_to_xyxy, poly2ds_to_mask, rle_to_mask
+)
+from scalabel.label.typing import Config
+from scalabel.label.typing import Dataset as ScalabelData
+from scalabel.label.typing import (
+    Extrinsics, Frame, ImageSize, Intrinsics, Label
+)
+from scalabel.label.utils import (
+    check_crowd, check_ignored, get_leaf_categories,
+    get_matrix_from_extrinsics, get_matrix_from_intrinsics
+)
 from torch import Tensor
 from torch.utils.data import Dataset
 
-from scalabel.label.io import load, load_label_config
-from scalabel.label.transforms import (
-    box2d_to_xyxy,
-    poly2ds_to_mask,
-    rle_to_mask,
-)
-from scalabel.label.typing import Dataset as ScalabelData
-from scalabel.label.typing import (
-    Config,
-    Extrinsics,
-    Frame,
-    ImageSize,
-    Intrinsics,
-    Label,
-)
-from scalabel.label.utils import (
-    check_crowd,
-    check_ignored,
-    get_leaf_categories,
-    get_matrix_from_extrinsics,
-    get_matrix_from_intrinsics,
-)
-
-from shift_dev.types import DictStrAny, NDArrayU8, DataDict, Keys, AxisMode
+from shift_dev.types import AxisMode, DataDict, DictStrAny, Keys, NDArrayU8
+from shift_dev.utils import Timer, setup_logger
 from shift_dev.utils.backend import DataBackend, FileBackend
 from shift_dev.utils.load import im_decode, ply_decode
-from .cache import DatasetFromList, CacheMappingMixin
+
+from .cache import CacheMappingMixin, DatasetFromList
+
+logger = setup_logger()
 
 
 def load_intrinsics(intrinsics: Intrinsics) -> Tensor:
     """Transform intrinsic camera matrix according to augmentations."""
-    intrinsic_matrix = torch.from_numpy(
-        get_matrix_from_intrinsics(intrinsics)
-    ).to(torch.float32)
+    intrinsic_matrix = torch.from_numpy(get_matrix_from_intrinsics(intrinsics)).to(
+        torch.float32
+    )
     return intrinsic_matrix
 
 
 def load_extrinsics(extrinsics: Extrinsics) -> Tensor:
     """Transform extrinsics from Scalabel to Vis4D."""
-    extrinsics_matrix = torch.from_numpy(
-        get_matrix_from_extrinsics(extrinsics)
-    ).to(torch.float32)
+    extrinsics_matrix = torch.from_numpy(get_matrix_from_extrinsics(extrinsics)).to(
+        torch.float32
+    )
     return extrinsics_matrix
 
 
@@ -75,7 +69,7 @@ def load_pointcloud(url: str, backend: DataBackend) -> Tensor:
 
 
 def instance_ids_to_global(
-    frames: list[Frame], local_instance_ids: dict[str, list[str]]
+    frames: list[Frame], local_instance_ids: Dict[str, list[str]]
 ) -> None:
     """Use local (per video) instance ids to produce global ones."""
     video_names = list(local_instance_ids.keys())
@@ -98,9 +92,7 @@ def instance_ids_to_global(
                 )
                 label.attributes[
                     "instance_id"
-                ] = sum_previous_vids + local_instance_ids[video_name].index(
-                    label.id
-                )
+                ] = sum_previous_vids + local_instance_ids[video_name].index(label.id)
 
 
 def add_data_path(data_root: str, frames: list[Frame]) -> None:
@@ -116,17 +108,15 @@ def add_data_path(data_root: str, frames: list[Frame]) -> None:
             ann.url = os.path.join(data_root, ann.url)
 
 
-def prepare_labels(
-    frames: list[Frame], global_instance_ids: bool = False
-) -> None:
+def prepare_labels(frames: list[Frame], global_instance_ids: bool = False) -> None:
     """Add category id and instance id to labels, return class frequencies."""
-    instance_ids: dict[str, list[str]] = defaultdict(list)
+    instance_ids: Dict[str, list[str]] = defaultdict(list)
     for frame_id, ann in enumerate(frames):
         if ann.labels is None:
             continue
 
         for label in ann.labels:
-            attr: dict[str, bool | int | float | str] = {}
+            attr: Dict[str, bool | int | float | str] = {}
             if label.attributes is not None:
                 attr = label.attributes
 
@@ -150,7 +140,7 @@ def prepare_labels(
 
 # Not using | operator because of a bug in Python 3.9
 # https://bugs.python.org/issue42233
-CategoryMap = Union[dict[str, int], dict[str, dict[str, int]]]
+CategoryMap = Union[Dict[str, int], Dict[str, Dict[str, int]]]
 
 
 class Scalabel(Dataset, CacheMappingMixin):
@@ -172,6 +162,7 @@ class Scalabel(Dataset, CacheMappingMixin):
         config_path: None | str = None,
         global_instance_ids: bool = False,
         bg_as_class: bool = False,
+        use_cache: bool = False,
     ) -> None:
         """Creates an instance of the class.
 
@@ -201,22 +192,19 @@ class Scalabel(Dataset, CacheMappingMixin):
         self.keys_to_load = keys_to_load
         self.global_instance_ids = global_instance_ids
         self.bg_as_class = bg_as_class
-        self.data_backend = (
-            data_backend if data_backend is not None else FileBackend()
-        )
+        self.use_cache = use_cache
+        self.data_backend = data_backend if data_backend is not None else FileBackend()
         self.config_path = config_path
-        self.frames, self.cfg = self._load_mapping(self._generate_mapping)
+        self.frames, self.cfg = self._load_mapping(self._generate_mapping, use_cache)
 
         assert self.cfg is not None, (
             "No dataset configuration found. Please provide a configuration "
             "via config_path."
         )
 
-        self.cats_name2id: dict[str, dict[str, int]] = {}
+        self.cats_name2id: Dict[str, Dict[str, int]] = {}
         if category_map is None:
-            class_list = list(
-                c.name for c in get_leaf_categories(self.cfg.categories)
-            )
+            class_list = list(c.name for c in get_leaf_categories(self.cfg.categories))
             assert len(set(class_list)) == len(
                 class_list
             ), "Class names are not unique!"
@@ -248,7 +236,7 @@ class Scalabel(Dataset, CacheMappingMixin):
         add_data_path(self.data_root, frames)
         prepare_labels(frames, global_instance_ids=self.global_instance_ids)
         frames = DatasetFromList(frames)
-        rank_zero_info(f"Loading {self} takes {timer.time():.2f} seconds.")
+        logger.info(f"Loading annotation takes {timer.time():.2f} seconds.")
         return frames, cfg
 
     def _generate_mapping(self) -> ScalabelData:
@@ -276,16 +264,10 @@ class Scalabel(Dataset, CacheMappingMixin):
         if frame.url is not None and Keys.points3d in self.keys_to_load:
             data[Keys.points3d] = load_pointcloud(frame.url, self.data_backend)
 
-        if (
-            frame.intrinsics is not None
-            and Keys.intrinsics in self.keys_to_load
-        ):
+        if frame.intrinsics is not None and Keys.intrinsics in self.keys_to_load:
             data[Keys.intrinsics] = load_intrinsics(frame.intrinsics)
 
-        if (
-            frame.extrinsics is not None
-            and Keys.extrinsics in self.keys_to_load
-        ):
+        if frame.extrinsics is not None and Keys.extrinsics in self.keys_to_load:
             data[Keys.extrinsics] = load_extrinsics(frame.extrinsics)
         return data
 
@@ -304,9 +286,7 @@ class Scalabel(Dataset, CacheMappingMixin):
         #     return  # pragma: no cover
 
         image_size = (
-            ImageSize(
-                height=data[Keys.input_hw][0], width=data[Keys.input_hw][0]
-            )
+            ImageSize(height=data[Keys.input_hw][0], width=data[Keys.input_hw][0])
             if Keys.input_hw in data
             else frame.size
         )
@@ -365,37 +345,10 @@ class Scalabel(Dataset, CacheMappingMixin):
         return data
 
 
-class ScalabelVideo(Scalabel, VideoMixin):
-    """Scalabel type dataset with video extension."""
-
-    @property
-    def video_to_indices(self) -> dict[str, list[int]]:
-        """Group all dataset sample indices (int) by their video ID (str).
-
-        Returns:
-            dict[str, list[int]]: Mapping video to index.
-        """
-        video_to_indices: dict[str, list[int]] = defaultdict(list)
-        video_to_frameidx: dict[str, list[int]] = defaultdict(list)
-        for idx, frame in enumerate(self.frames):  # type: ignore
-            if frame.videoName is not None:
-                assert (
-                    frame.frameIndex is not None
-                ), "found videoName but no frameIndex!"
-                video_to_frameidx[frame.videoName].append(frame.frameIndex)
-                video_to_indices[frame.videoName].append(idx)
-
-        # sort dataset indices by frame indices
-        for key, idcs in video_to_indices.items():
-            zip_frame_idx = sorted(zip(video_to_frameidx[key], idcs))
-            video_to_indices[key] = [idx for _, idx in zip_frame_idx]
-        return video_to_indices
-
-
 def boxes3d_from_scalabel(
     labels: list[Label],
-    class_to_idx: dict[str, int],
-    label_id_to_idx: dict[str, int] | None = None,
+    class_to_idx: Dict[str, int],
+    label_id_to_idx: Dict[str, int] | None = None,
 ) -> tuple[Tensor, Tensor, Tensor]:
     """Convert 3D bounding boxes from scalabel format to Vis4D."""
     box_list, cls_list, idx_list = [], [], []
@@ -426,8 +379,8 @@ def boxes3d_from_scalabel(
 
 def boxes2d_from_scalabel(
     labels: list[Label],
-    class_to_idx: dict[str, int],
-    label_id_to_idx: dict[str, int] | None = None,
+    class_to_idx: Dict[str, int],
+    label_id_to_idx: Dict[str, int] | None = None,
 ) -> tuple[Tensor, Tensor, Tensor]:
     """Convert from scalabel format to Vis4D.
 
@@ -437,8 +390,8 @@ def boxes2d_from_scalabel(
 
     Args:
         labels (list[Label]): list of scalabel labels.
-        class_to_idx (dict[str, int]): mapping from class name to index.
-        label_id_to_idx (dict[str, int] | None, optional): mapping from label
+        class_to_idx (Dict[str, int]): mapping from class name to index.
+        label_id_to_idx (Dict[str, int] | None, optional): mapping from label
             id to index. Defaults to None.
 
     Returns:
@@ -477,7 +430,7 @@ def boxes2d_from_scalabel(
 
 def instance_masks_from_scalabel(
     labels: list[Label],
-    class_to_idx: dict[str, int],
+    class_to_idx: Dict[str, int],
     image_size: ImageSize | None = None,
     bg_as_class: bool = False,
 ) -> Tensor:
@@ -485,7 +438,7 @@ def instance_masks_from_scalabel(
 
     Args:
         labels (list[Label]): list of scalabel labels.
-        class_to_idx (dict[str, int]): mapping from class name to index.
+        class_to_idx (Dict[str, int]): mapping from class name to index.
         image_size (ImageSize, optional): image size. Defaults to None.
         bg_as_class (bool, optional): whether to include background as a class.
             Defaults to False.
@@ -514,16 +467,12 @@ def instance_masks_from_scalabel(
         bitmask_list.append(bitmask)
         if bg_as_class:
             foreground = (
-                bitmask
-                if foreground is None
-                else np.logical_or(foreground, bitmask)
+                bitmask if foreground is None else np.logical_or(foreground, bitmask)
             )
     if bg_as_class:
         if foreground is None:  # pragma: no cover
             assert image_size is not None
-            foreground = np.zeros(
-                (image_size.height, image_size.width), dtype=np.uint8
-            )
+            foreground = np.zeros((image_size.height, image_size.width), dtype=np.uint8)
         bitmask_list.append(np.logical_not(foreground))
     if len(bitmask_list) == 0:  # pragma: no cover
         return torch.empty(0, 0, 0, dtype=torch.uint8)

@@ -6,14 +6,17 @@ FileBackend, which loads from / saves to file naively.
 """
 from __future__ import annotations
 
-from abc import abstractmethod
 import os
+from abc import abstractmethod
 from zipfile import ZipFile
 
-import h5py
-from h5py import File
-import numpy as np
+try:
+    import h5py
+    from h5py import File
+except:
+    raise ImportError("Please install h5py to enable HDF5Backend.")
 
+import numpy as np
 
 
 class DataBackend:
@@ -116,8 +119,6 @@ class HDF5Backend(DataBackend):
     def __init__(self) -> None:
         """Creates an instance of the class."""
         super().__init__()
-        if not H5PY_AVAILABLE:
-            raise ImportError("Please install h5py to enable HDF5Backend.")
         self.db_cache: dict[str, File] = {}
 
     @staticmethod
@@ -185,9 +186,7 @@ class HDF5Backend(DataBackend):
 
             group = file[group_str]
             key = key_list[-1]
-            group.create_dataset(
-                key, data=np.frombuffer(content, dtype="uint8")
-            )
+            group.create_dataset(key, data=np.frombuffer(content, dtype="uint8"))
 
     def _get_client(self, hdf5_path: str, mode: str) -> File:
         """Get HDF5 client from path.
@@ -315,9 +314,7 @@ class ZipBackend(DataBackend):
         url = "/".join(reversed(keys))
         zip_file.writestr(url, content)
 
-    def _get_client(
-        self, zip_path: str, mode: Literal["r", "w", "a", "x"]
-    ) -> ZipFile:
+    def _get_client(self, zip_path: str, mode: Literal["r", "w", "a", "x"]) -> ZipFile:
         """Get Zip client from path.
 
         Args:
@@ -335,9 +332,7 @@ class ZipBackend(DataBackend):
             client, current_mode = self.db_cache[zip_path]
             if current_mode != mode:
                 client.close()
-                client = ZipFile(  # pylint:disable=consider-using-with
-                    zip_path, mode
-                )
+                client = ZipFile(zip_path, mode)  # pylint:disable=consider-using-with
                 self.db_cache[zip_path] = (client, mode)
         return client
 
@@ -363,9 +358,7 @@ class ZipBackend(DataBackend):
         zip_path, keys = self._get_zip_path(filepath)
 
         if not os.path.exists(zip_path):
-            raise FileNotFoundError(
-                f"Corresponding zip file not found:" f" {filepath}"
-            )
+            raise FileNotFoundError(f"Corresponding zip file not found:" f" {filepath}")
         zip_file = self._get_client(zip_path, "r")
         url = "/".join(reversed(keys))
         try:

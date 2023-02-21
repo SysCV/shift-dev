@@ -115,7 +115,10 @@ def main():
         help="Path to store the output video.",
     )
     parser.add_argument(
-        "--fps", default=10, type=int, help="Framerate of the video.",
+        "--fps",
+        default=10,
+        type=int,
+        help="Framerate of the video.",
     )
     parser.add_argument(
         "--no_gray_background",

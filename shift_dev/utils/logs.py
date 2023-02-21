@@ -2,17 +2,38 @@ import logging
 from time import perf_counter
 
 
+class LoggerSingleton:
+    __instance = None
+
+    @staticmethod
+    def get_logger():
+        if LoggerSingleton.__instance is None:
+            LoggerSingleton()
+        return LoggerSingleton.__instance.logger
+
+    def __init__(self):
+        if LoggerSingleton.__instance is not None:
+            raise Exception(
+                "LoggerSingleton is a singleton class, use get_logger() instead"
+            )
+        else:
+            self.logger = logging.getLogger("shift_dev_logger")
+            self.logger.setLevel(logging.DEBUG)
+            log_formatter = logging.Formatter(
+                "[%(asctime)s] SHIFT DevKit - %(levelname)s - %(message)s",
+                datefmt="%m/%d/%Y %H:%M:%S",
+            )
+            ch = logging.StreamHandler()
+            ch.setLevel(logging.DEBUG)
+            ch.setFormatter(log_formatter)
+            for handler in self.logger.handlers:
+                self.logger.removeHandler(handler)
+            self.logger.addHandler(ch)
+            LoggerSingleton.__instance = self
+
+
 def setup_logger():
-    log_formatter = logging.Formatter(
-        "[%(asctime)s] SHIFT DevKit - %(levelname)s - %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
-    )
-    logger = logging.getLogger("logger")
-    logger.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(log_formatter)
-    logger.addHandler(ch)
+    logger = LoggerSingleton.get_logger()
     return logger
 
 

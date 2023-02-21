@@ -8,7 +8,6 @@ import numpy.typing as npt
 import plyfile
 from PIL import Image, ImageOps
 
-
 NDArrayUI8 = npt.NDArray[np.uint8]
 NDArrayF32 = npt.NDArray[np.float32]
 

@@ -1,12 +1,12 @@
 """Utility functions for datasets."""
 from __future__ import annotations
 
-from typing import Any
-import hashlib
 import copy
+import hashlib
 import os
 import pickle
 from collections.abc import Callable
+from typing import Any
 
 import appdirs
 import numpy as np
@@ -14,7 +14,6 @@ from torch.utils.data import Dataset
 
 from shift_dev.types import DictStrAny, NDArrayU8
 from shift_dev.utils import Timer, setup_logger
-
 
 logger = setup_logger()
 
@@ -53,9 +52,7 @@ class DatasetFromList(Dataset):  # type: ignore
 
         if self._serialize:
             self._lst = [_serialize(x) for x in lst]
-            self._addr = np.asarray(
-                [len(x) for x in self._lst], dtype=np.int64
-            )
+            self._addr = np.asarray([len(x) for x in self._lst], dtype=np.int64)
             self._addr = np.cumsum(self._addr)
             self._lst = np.concatenate(self._lst)  # type: ignore
         else:
@@ -105,16 +102,20 @@ class CacheMappingMixin:
         """Load possibly cached mapping via generate_map_func."""
         if use_cache:
             app_dir = os.getenv(
-                "VIS4D_CACHE_DIR", appdirs.user_cache_dir(appname="vis4d")
+                "SHIFT_CACHE_DIR",
+                os.getenv("TMPDIR", appdirs.user_cache_dir(appname="shift_dev")),
             )
             cache_dir = os.path.join(
                 app_dir,
-                "data_mapping",
+                "shfit_data_mapping",
                 self.__class__.__name__,
             )
             os.makedirs(cache_dir, exist_ok=True)
             cache_path = os.path.join(cache_dir, self._get_hash() + ".pkl")
             if not os.path.exists(cache_path):
+                logger.info(
+                    f"Generating annotation cache and dumping to {cache_path} .."
+                )
                 data = generate_map_func()
                 with open(cache_path, "wb") as file:
                     file.write(pickle.dumps(data))
@@ -134,9 +135,7 @@ class CacheMappingMixin:
         timer = Timer()
         data = self._load_mapping_data(generate_map_func, use_cache)
         dataset = DatasetFromList(data)
-        logger.info(
-            f"Loading {str(self.__repr__)} takes {timer.time():.2f} seconds."
-        )
+        logger.info(f"Loading {str(self.__repr__)} takes {timer.time():.2f} seconds.")
         return dataset
 
     def _get_hash(self, length: int = 16) -> str:

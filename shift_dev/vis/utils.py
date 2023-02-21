@@ -20,23 +20,12 @@ from matplotlib.font_manager import FontProperties
 from scalabel.common.typing import NDArrayF64, NDArrayU8
 from scalabel.label.transforms import rle_to_mask
 from scalabel.label.typing import Config, Edge, Frame, Intrinsics, Label, Node
-from scalabel.label.utils import (
-    check_crowd,
-    check_ignored,
-    check_occluded,
-    check_truncated,
-    get_leaf_categories,
-    get_matrix_from_intrinsics,
-)
+from scalabel.label.utils import (check_crowd, check_ignored, check_occluded,
+                                  check_truncated, get_leaf_categories,
+                                  get_matrix_from_intrinsics)
 from scalabel.vis.geometry import Label3d, vector_3d_to_2d
-from scalabel.vis.helper import (
-    gen_2d_rect,
-    gen_3d_cube,
-    gen_graph_edge,
-    gen_graph_point,
-    poly2patch,
-    random_color,
-)
+from scalabel.vis.helper import (gen_2d_rect, gen_3d_cube, gen_graph_edge,
+                                 gen_graph_point, poly2patch, random_color)
 from skimage.transform import resize
 
 # Necessary due to Queue being generic in stubs but not at runtime
@@ -136,7 +125,9 @@ class LabelViewer:
     """
 
     def __init__(
-        self, ui_cfg: UIConfig = UIConfig(), label_cfg: Optional[Config] = None,
+        self,
+        ui_cfg: UIConfig = UIConfig(),
+        label_cfg: Optional[Config] = None,
     ) -> None:
         """Initialize the label viewer."""
         self.ui_cfg = ui_cfg
@@ -330,7 +321,8 @@ class LabelViewer:
                 if with_tags:
                     label3d = Label3d.from_box3d(label.box3d)
                     point_1 = vector_3d_to_2d(
-                        label3d.vertices[-1], get_matrix_from_intrinsics(intrinsics),
+                        label3d.vertices[-1],
+                        get_matrix_from_intrinsics(intrinsics),
                     )
                     x1, y1 = point_1[0], point_1[1]
                     self._draw_label_attributes(label, x1, y1 - 4)
@@ -364,7 +356,11 @@ class LabelViewer:
 
                 if with_ctrl_points:
                     self._draw_ctrl_points(
-                        poly.vertices, poly.types, color, alpha, ctrl_point_size,
+                        poly.vertices,
+                        poly.types,
+                        color,
+                        alpha,
+                        ctrl_point_size,
                     )
 
                 patch_vertices: NDArrayF64 = np.array(poly.vertices, dtype=np.float64)
@@ -401,7 +397,10 @@ class LabelViewer:
                 else:
                     vert_prev = vertices[idx - 1]
                 edge: NDArrayF64 = np.concatenate(
-                    [np.array(vert_prev)[None, ...], np.array(vert)[None, ...],],
+                    [
+                        np.array(vert_prev)[None, ...],
+                        np.array(vert)[None, ...],
+                    ],
                     axis=0,
                 )
                 self.ax.add_patch(
@@ -426,7 +425,10 @@ class LabelViewer:
 
                 if type_next == "L":
                     edge = np.concatenate(
-                        [np.array(vert_next)[None, ...], np.array(vert)[None, ...],],
+                        [
+                            np.array(vert_next)[None, ...],
+                            np.array(vert)[None, ...],
+                        ],
                         axis=0,
                     )
                     self.ax.add_patch(
@@ -477,7 +479,8 @@ class LabelViewer:
 
             color: NDArrayF64 = self._get_label_color(label) * 255
             bitmask = resize(
-                rle_to_mask(label.rle), (self.ui_cfg.height, self.ui_cfg.width),
+                rle_to_mask(label.rle),
+                (self.ui_cfg.height, self.ui_cfg.width),
             )
             mask = np.repeat(bitmask[:, :, np.newaxis], 3, axis=2)
 
@@ -487,7 +490,9 @@ class LabelViewer:
         img: NDArrayU8 = image * 255
         self.ax.imshow(
             np.where(
-                combined_mask > 0, combined_mask.astype(np.uint8), img.astype(np.uint8),
+                combined_mask > 0,
+                combined_mask.astype(np.uint8),
+                img.astype(np.uint8),
             ),
             alpha=alpha,
         )

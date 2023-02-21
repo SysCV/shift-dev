@@ -1,21 +1,28 @@
 """SHIFT dataset."""
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import Sequence
+from functools import partial
 from io import BytesIO
 
 import numpy as np
 import torch
+from scalabel.label.io import parse
+from scalabel.label.typing import Config
+from scalabel.label.typing import Dataset as ScalabelData
 from torch import Tensor
 from torch.utils.data import Dataset
-from scalabel.label.io import load
-from scalabel.label.typing import Dataset as ScalabelData
 
-from shift_dev.types import Keys, DataDict
-from shift_dev.utils.load import im_decode, ply_decode
+from shift_dev.types import DataDict, Keys
+from shift_dev.utils import setup_logger
 from shift_dev.utils.backend import DataBackend, HDF5Backend, ZipBackend
+from shift_dev.utils.load import im_decode, ply_decode
+
 from .base import Scalabel
+
+logger = setup_logger()
 
 
 def _get_extension(backend: DataBackend):
@@ -48,6 +55,7 @@ class _SHIFTScalabelLabels(Scalabel):
         annotation_file: str = "",
         view: str = "front",
         backend: DataBackend = HDF5Backend(),
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """Initialize SHIFT dataset for one view.
@@ -61,10 +69,10 @@ class _SHIFTScalabelLabels(Scalabel):
             backend (DataBackend): Backend to use for loading data. Default:
                 HDF5Backend().
         """
+        self.verbose = verbose
+
         # Validate input
-        assert split in set(
-            ("train", "val", "test")
-        ), f"Invalid split '{split}'"
+        assert split in set(("train", "val", "test")), f"Invalid split '{split}'"
         assert view in _SHIFTScalabelLabels.VIEWS, f"Invalid view '{view}'"
 
         # Set attributes
@@ -76,14 +84,58 @@ class _SHIFTScalabelLabels(Scalabel):
             data_root, "discrete", "images", split, view, f"{data_file}{ext}"
         )
 
-        super().__init__(
-            data_path, annotation_path, data_backend=backend, **kwargs
-        )
+        super().__init__(data_path, annotation_path, data_backend=backend, **kwargs)
 
     def _generate_mapping(self) -> ScalabelData:
         """Generate data mapping."""
         # NOTE: Skipping validation for much faster loading
-        return load(self.annotation_path, validate_frames=False)
+        if self.verbose:
+            logger.info(f"Loading annotation from '{self.annotation_path}'...")
+        return self._load(self.annotation_path, nprocs=0)
+
+    def _load(self, filepath: str, nprocs: int = 0) -> ScalabelData:
+        """Load labels from a json file or a folder of json files."""
+        raw_frames: List[DictStrAny] = []
+        raw_groups: List[DictStrAny] = []
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"{filepath} does not exist.")
+
+        def process_file(filepath: str) -> Optional[DictStrAny]:
+            raw_cfg = None
+            with open(filepath, mode="r", encoding="utf-8") as fp:
+                content = json.load(fp)
+            if isinstance(content, dict):
+                raw_frames.extend(content["frames"])
+                if "groups" in content and content["groups"] is not None:
+                    raw_groups.extend(content["groups"])
+                if "config" in content and content["config"] is not None:
+                    raw_cfg = content["config"]
+            elif isinstance(content, list):
+                raw_frames.extend(content)
+            else:
+                raise TypeError("The input file contains neither dict nor list.")
+            if self.verbose:
+                logger.info(f"Loading annotation from '{filepath}'. Done.")
+            return raw_cfg
+
+        cfg = None
+        if os.path.isfile(filepath) and filepath.endswith("json"):
+            ret_cfg = process_file(filepath)
+            if ret_cfg is not None:
+                cfg = ret_cfg
+        else:
+            raise TypeError("Inputs must be a folder or a JSON file.")
+
+        config = None
+        if cfg is not None:
+            config = Config(**cfg)
+
+        parse_ = partial(parse, validate_frames=False)
+        if nprocs > 1:
+            frames = pmap(parse_, raw_frames, nprocs)
+        else:
+            frames = list(map(parse_, raw_frames))
+        return ScalabelData(frames=frames, config=config)
 
 
 class SHIFTDataset(Dataset):
@@ -175,6 +227,7 @@ class SHIFTDataset(Dataset):
         keys_to_load: Sequence[str] = (Keys.images, Keys.boxes2d),
         views_to_load: Sequence[str] = ("front",),
         backend: DataBackend = HDF5Backend(),
+        verbose: bool = False,
     ) -> None:
         """Initialize SHIFT dataset."""
         # Validate input
@@ -187,6 +240,7 @@ class SHIFTDataset(Dataset):
         self.keys_to_load = keys_to_load
         self.views_to_load = views_to_load
         self.backend = backend
+        self.verbose = verbose
         self.ext = _get_extension(backend)
         self.annotation_base = os.path.join(
             self.data_root, "discrete", "images", self.split
@@ -212,6 +266,7 @@ class SHIFTDataset(Dataset):
                     view=view,
                     keys_to_load=(Keys.points3d, *self.DATA_GROUPS["det_3d"]),
                     backend=backend,
+                    verbose=verbose,
                 )
             else:
                 # Skip the lidar data group, which is loaded separately
@@ -223,7 +278,6 @@ class SHIFTDataset(Dataset):
                     if not image_loaded:
                         keys_to_load.extend(self.DATA_GROUPS["img"])
                         image_loaded = True
-
                     self.scalabel_datasets[name] = _SHIFTScalabelLabels(
                         data_root=self.data_root,
                         split=self.split,
@@ -232,6 +286,7 @@ class SHIFTDataset(Dataset):
                         view=view,
                         keys_to_load=keys_to_load,
                         backend=backend,
+                        verbose=verbose,
                     )
 
     def validate_keys(self, keys_to_load: Sequence[str]) -> None:
@@ -287,9 +342,7 @@ class SHIFTDataset(Dataset):
         image = image.astype(np.float32)
 
         # Convert to depth
-        depth = (
-            image[:, :, 2] * 256 * 256 + image[:, :, 1] * 256 + image[:, :, 0]
-        )
+        depth = image[:, :, 2] * 256 * 256 + image[:, :, 1] * 256 + image[:, :, 0]
         return torch.as_tensor(
             np.ascontiguousarray(depth / max_depth),
             dtype=torch.float32,
@@ -323,9 +376,7 @@ class SHIFTDataset(Dataset):
     def __len__(self) -> int:
         """Get the number of samples in the dataset."""
         if len(self.scalabel_datasets) > 0:
-            return len(
-                self.scalabel_datasets[list(self.scalabel_datasets.keys())[0]]
-            )
+            return len(self.scalabel_datasets[list(self.scalabel_datasets.keys())[0]])
         raise ValueError("No Scalabel file has been loaded.")
 
     def __getitem__(self, idx: int) -> DataDict:
@@ -346,9 +397,7 @@ class SHIFTDataset(Dataset):
             if view == "center":
                 # Lidar is only available in the center view
                 if Keys.points3d in self.keys_to_load:
-                    data_dict_view.update(
-                        self.scalabel_datasets["center/lidar"][idx]
-                    )
+                    data_dict_view.update(self.scalabel_datasets["center/lidar"][idx])
             else:
                 # Load data from Scalabel
                 for group in self._data_groups_to_load:

@@ -50,8 +50,8 @@ You could find the download links in our [download page](https://www.vis.xyz/shi
 
 ## Data Loaders
 
-We have implemented reference dataset classes for SHIFT. These examples
-show how to load the SHIFT dataset via the PyTorch Dataset ([examples/torch_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/torch_dataset.py)) and CustomDataset in [mmdet](https://github.com/open-mmlab/mmdetection) framework ([examples/mmdet_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/mmdet_dataset.py)).
+We have implemented reference dataset classes for SHIFT. They
+show how to load the data via the PyTorch Dataset ([torch_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/torch_dataset.py)) and CustomDataset in [mmdet](https://github.com/open-mmlab/mmdetection) framework ([mmdet_dataset.py](https://github.com/SysCV/shift-dev/blob/main/examples/mmdet_dataset.py)).
 
 Below is an example for PyTorch Dataset.
 

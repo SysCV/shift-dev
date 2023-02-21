@@ -26,9 +26,9 @@ class LoggerSingleton:
             ch = logging.StreamHandler()
             ch.setLevel(logging.DEBUG)
             ch.setFormatter(log_formatter)
-            for handler in self.logger.handlers:
-                self.logger.removeHandler(handler)
             self.logger.addHandler(ch)
+            self.logger.propagate = False
+            
             LoggerSingleton.__instance = self
 
 

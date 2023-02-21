@@ -1,13 +1,14 @@
 """
-This is an mmdet style dataset for the SHIFT dataset. Note that only single-view data is
-supported. Please refer to the torch version of the dataset for multi-view data.
+This is a reference code for mmdet style dataset of the SHIFT dataset. Note that
+only single-view data is supported. Please refer to the torch version of the
+dataset for multi-view data.
 
 Example for mmdet config file:
 
     >>> dataset = SHIFTDataset(
     >>>     data_root='./shift_dataset/discrete/images'
     >>>     ann_file='train/front/det_2d.json',
-    >>>     img_prefix='train/front/img',
+    >>>     img_prefix='train/front/img.zip',
     >>>     backend_type='zip',
     >>>     pipeline=[
     >>>        ...
@@ -18,10 +19,18 @@ Example for mmdet config file:
 
 import json
 import os
+import sys
 import numpy as np
+
 import mmcv
 from mmdet.datasets.builder import DATASETS
 from mmdet.datasets.custom import CustomDataset
+
+
+root_dir = os.path.abspath(
+    os.path.join(__file__, os.pardir, os.pardir)
+)
+sys.path.append(root_dir)
 
 from shift_dev.utils.backend import ZipBackend, HDF5Backend
 
@@ -36,6 +45,7 @@ class SHIFTDataset(CustomDataset):
 
     def __init__(self, backend_type: str = "file", *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.backend_type = backend_type
         if backend_type == "file":
             self.backend = None
         elif backend_type == "zip":
@@ -44,7 +54,8 @@ class SHIFTDataset(CustomDataset):
             self.backend = HDF5Backend()
         else:
             raise ValueError(
-                f"Unknown backend type: {backend_type}, must be one of ['file', 'zip', 'hdf5']"
+                f"Unknown backend type: {backend_type}! "
+                "Must be one of ['file', 'zip', 'hdf5']"
             )
 
     def load_annotations(self, ann_file):
@@ -53,7 +64,9 @@ class SHIFTDataset(CustomDataset):
 
         data_infos = []
         for img_info in data['frames']:
-            img_filename = os.path.join(self.img_prefix, img_info['name'])
+            img_filename = os.path.join(
+                self.img_prefix, img_info['videoName'], img_info['name']
+            )
 
             bboxes = []
             labels = []
@@ -75,18 +88,21 @@ class SHIFTDataset(CustomDataset):
         return data_infos
         
     def get_img(self, idx):
-        if self.backend == "zip":
-            img_bytes = self.backend.get(self.data_infos[idx]['filename'])
+        filename = self.data_infos[idx]['filename']
+        if self.backend_type == "zip":
+            img_bytes = self.backend.get(filename)
             return mmcv.imfrombytes(img_bytes)
-        elif self.backend == "hdf5":
-            img_bytes = self.backend.get(self.data_infos[idx]['filename'])
+        elif self.backend_type == "hdf5":
+            img_bytes = self.backend.get(filename)
             return mmcv.imfrombytes(img_bytes)
         else:
-            return mmcv.imread(self.data_infos[idx]['filename'])
+            return mmcv.imread(filename)
 
     def get_img_info(self, idx):
         return dict(
-            filename=self.data_infos[idx]['filename'], width=self.WIDTH, height=self.HEIGHT
+            filename=self.data_infos[idx]['filename'],
+            width=self.WIDTH,
+            height=self.HEIGHT,
         )
 
     def get_ann_info(self, idx):
@@ -105,7 +121,7 @@ def main():
     dataset = SHIFTDataset(
         data_root='../../SHIFT_dataset/v2/public/discrete/images',
         ann_file='train/front/det_2d.json',
-        img_prefix='train/front/img',
+        img_prefix='train/front/img.zip',
         backend_type="zip",
         pipeline=[],
     )
@@ -114,14 +130,12 @@ def main():
     print(f"Total number of samples: {len(dataset)}.")
 
     # Print the tensor shape of the first batch.
-    for i, batch in enumerate(dataset):
-        print(f"Batch {i}:")
-        for k, data in batch.items():
-            if isinstance(data, torch.Tensor):
-                print(f"{k}: {data.shape}")
-            else:
-                print(f"{k}: {data}")
-        break    
+    for i, data in enumerate(dataset):
+        print(f"Sample {i}:")
+        print("img:", data["img"].shape)
+        print("ann_info.bboxes:", data["ann_info"]["bboxes"].shape)
+        print("ann_info.labels:", data["ann_info"]["labels"].shape)
+        break
 
 
 if __name__ == "__main__":

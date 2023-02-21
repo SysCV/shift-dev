@@ -7,6 +7,9 @@ root_dir = os.path.abspath(
 )
 sys.path.append(root_dir)
 
+import torch
+from torch.utils.data import DataLoader
+
 from shift_dev import SHIFTDataset
 from shift_dev.types import Keys
 from shift_dev.utils.backend import ZipBackend
@@ -18,25 +21,33 @@ def main():
         split="train",
         keys_to_load=[
             Keys.images,
-            Keys.input_hw,
             Keys.intrinsics,
-            # Keys.boxes2d,
-            # Keys.boxes2d_classes,
-            # Keys.boxes2d_track_ids,
+            Keys.boxes2d,
+            Keys.boxes2d_classes,
+            Keys.boxes2d_track_ids,
             Keys.segmentation_masks,
         ],
         views_to_load=["front"],
-        backend=ZipBackend(),
+        backend=ZipBackend(),  # also supports HDF5Backend(), FileBackend()
         verbose=True,
     )
 
-    print("Number of samples:", len(dataset))
+    dataloader = DataLoader(
+        dataset,
+        batch_size=1,
+        shuffle=False,
+    )
 
-    for k, data in dataset[0].items():
-        if isinstance(data, tuple) or isinstance(data, str):
-            print(f"{k}: {data}")
-        else:
-            print(f"{k}, {data.shape}")
+    print(f"Number of samples:", len(dataset))
+
+    for i, batch in enumerate(dataloader):
+        print(f"Batch {i}:")
+        for k, data in batch["front"].items():
+            if isinstance(data, torch.Tensor):
+                print(f"{k}: {data.shape}")
+            else:
+                print(f"{k}: {data}")
+        break
 
 
 if __name__ == "__main__":

@@ -25,8 +25,8 @@ Below is a snippet showing how to add the SHIFTDataset class in mmdet config fil
 
 Notes
 -----
-1.  Please copy this file under `mmdet/datasets/` and update the `mmdet/datasets/__init__.py`
-    so that the `SHIFTDataset` class are imported. You can refer to their official tutorial at
+1.  Please copy this file to `mmdet/datasets/` and update the `mmdet/datasets/__init__.py`
+    so that the `SHIFTDataset` class is imported. You can refer to their official tutorial at
     https://mmdetection.readthedocs.io/en/latest/tutorials/customize_dataset.html.
 2.  The `backend_type` must be one of ['file', 'zip', 'hdf5'] and the `img_prefix`
     must be consistent with the backend_type.

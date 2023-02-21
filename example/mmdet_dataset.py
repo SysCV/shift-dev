@@ -38,6 +38,7 @@ import mmcv
 import numpy as np
 from mmdet.datasets.builder import DATASETS
 from mmdet.datasets.custom import CustomDataset
+from mmdet.datasets.pipelines import LoadAnnotations
 
 # Add the root directory of the project to the path. Remove the following two lines
 # if you have installed shift_dev as a package.
@@ -54,7 +55,7 @@ class SHIFTDataset(CustomDataset):
     WIDTH = 1280
     HEIGHT = 800
 
-    def __init__(self, backend_type: str = "file", *args, **kwargs):
+    def __init__(self, *args, backend_type: str = "file", **kwargs):
         """Initialize the SHIFT dataset.
 
         Args:
@@ -94,8 +95,8 @@ class SHIFTDataset(CustomDataset):
                 bboxes.append((bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]))
                 labels.append(self.CLASSES.index(label["category"]))
                 track_ids.append(label["id"])
-                if label["mask"] is not None:
-                    masks.append(label["mask"])
+                if "rle" in label and label["rle"] is not None:
+                    masks.append(label["rle"])
 
             data_infos.append(
                 dict(
@@ -137,23 +138,27 @@ class SHIFTDataset(CustomDataset):
         img = self.get_img(idx)
         img_info = self.get_img_info(idx)
         ann_info = self.get_ann_info(idx)
-        return dict(img=img, img_info=img_info, ann_info=ann_info)
+        results = dict(img=img, img_info=img_info, ann_info=ann_info)
+        self.pre_pipeline(results)
+        return self.pipeline(results)
 
     def prepare_test_img(self, idx):
         img = self.get_img(idx)
         img_info = self.get_img_info(idx)
-        return dict(img=img, img_info=img_info)
+        results = dict(img=img, img_info=img_info)
+        self.pre_pipeline(results)
+        return self.pipeline(results)
 
 
 def main():
-    """Load the SHIFT dataset and print the tensor shape of the first batch."""
+    """Load the SHIFT dataset for instance segmentation."""
 
     dataset = SHIFTDataset(
         data_root="../../SHIFT_dataset/v2/public/discrete/images",
-        ann_file="train/front/det_2d.json",
+        ann_file="train/front/det_insseg_2d.json",
         img_prefix="train/front/img.zip",
         backend_type="zip",
-        pipeline=[],
+        pipeline=[LoadAnnotations(with_mask=True)],
     )
 
     # Print the dataset size
@@ -166,6 +171,9 @@ def main():
         print("ann_info.bboxes:", data["ann_info"]["bboxes"].shape)
         print("ann_info.labels:", data["ann_info"]["labels"].shape)
         print("ann_info.track_ids:", data["ann_info"]["track_ids"].shape)
+        if "gt_masks" in data:
+            print("gt_masks:", data["gt_masks"])
+
         break
 
 

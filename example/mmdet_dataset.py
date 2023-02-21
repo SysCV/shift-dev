@@ -1,9 +1,15 @@
-"""
-This is a reference code for mmdet style dataset of the SHIFT dataset. Note that
-only single-view data is supported. Please refer to the torch version of the
-dataset for multi-view data.
+"""SHIFT dataset for mmdet.
 
-Example for mmdet config file:
+This is a reference code for mmdet style dataset of the SHIFT dataset. Note that
+only single-view 2D detection/tracking is supported. Please refer to the torch 
+version of the dataloader for multi-view multi-task cases.
+
+The dataset is based on the CustomDataset class of mmdet-2.20.0.
+
+
+Example
+-------
+Below is an example of how to use the SHIFTDataset class.
 
     >>> dataset = SHIFTDataset(
     >>>     data_root='./shift_dataset/discrete/images'
@@ -15,30 +21,35 @@ Example for mmdet config file:
     >>>     ]
     >>> )
 
+
+Notes
+-----
+1.  The `backend_type` must be one of ['file', 'zip', 'hdf5'] and the `img_prefix`
+    must be consistent with the backend_type.
+2.  Since the images are loaded before the pipeline, there is no need to add a 
+    `LoadImageFromFile` module in the pipeline again.
 """
 
 import json
 import os
 import sys
-import numpy as np
 
 import mmcv
+import numpy as np
 from mmdet.datasets.builder import DATASETS
 from mmdet.datasets.custom import CustomDataset
 
-
-root_dir = os.path.abspath(
-    os.path.join(__file__, os.pardir, os.pardir)
-)
+# Add the root directory of the project to the path. Remove the following two lines
+# if you have installed shift_dev as a package.
+root_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir))
 sys.path.append(root_dir)
 
-from shift_dev.utils.backend import ZipBackend, HDF5Backend
+from shift_dev.utils.backend import HDF5Backend, ZipBackend
 
 
 @DATASETS.register_module()
 class SHIFTDataset(CustomDataset):
-
-    CLASSES = ('pedestrian', 'car', 'truck', 'bus', 'motorcycle', 'bicycle')
+    CLASSES = ("pedestrian", "car", "truck", "bus", "motorcycle", "bicycle")
 
     WIDTH = 1280
     HEIGHT = 800
@@ -59,22 +70,24 @@ class SHIFTDataset(CustomDataset):
             )
 
     def load_annotations(self, ann_file):
-        with open(ann_file, 'r') as f:
+        with open(ann_file, "r") as f:
             data = json.load(f)
 
         data_infos = []
-        for img_info in data['frames']:
+        for img_info in data["frames"]:
             img_filename = os.path.join(
-                self.img_prefix, img_info['videoName'], img_info['name']
+                self.img_prefix, img_info["videoName"], img_info["name"]
             )
 
             bboxes = []
             labels = []
-            for label in img_info['labels']:
-                bbox = label['box2d']
-                bboxes.append((bbox['x1'], bbox['y1'], bbox['x2'], bbox['y2']))
-                labels.append(self.CLASSES.index(label['category']))
-            
+            track_ids = []
+            for label in img_info["labels"]:
+                bbox = label["box2d"]
+                bboxes.append((bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]))
+                labels.append(self.CLASSES.index(label["category"]))
+                track_ids.append(label["id"])
+
             data_infos.append(
                 dict(
                     filename=img_filename,
@@ -82,13 +95,15 @@ class SHIFTDataset(CustomDataset):
                     height=self.HEIGHT,
                     ann=dict(
                         bboxes=np.array(bboxes).astype(np.float32),
-                        labels=np.array(labels).astype(np.int64))
+                        labels=np.array(labels).astype(np.int64),
+                        track_ids=np.array(track_ids).astype(np.int64),
+                    ),
                 )
             )
         return data_infos
-        
+
     def get_img(self, idx):
-        filename = self.data_infos[idx]['filename']
+        filename = self.data_infos[idx]["filename"]
         if self.backend_type == "zip":
             img_bytes = self.backend.get(filename)
             return mmcv.imfrombytes(img_bytes)
@@ -100,28 +115,33 @@ class SHIFTDataset(CustomDataset):
 
     def get_img_info(self, idx):
         return dict(
-            filename=self.data_infos[idx]['filename'],
+            filename=self.data_infos[idx]["filename"],
             width=self.WIDTH,
             height=self.HEIGHT,
         )
 
     def get_ann_info(self, idx):
-        return self.data_infos[idx]['ann']
+        return self.data_infos[idx]["ann"]
 
-    def __getitem__(self, idx):
+    def prepare_train_img(self, idx):
         img = self.get_img(idx)
         img_info = self.get_img_info(idx)
-        ann = self.get_ann_info(idx)
-        return self.pipeline(dict(img=img, img_info=img_info, ann_info=ann))
+        ann_info = self.get_ann_info(idx)
+        return dict(img=img, img_info=img_info, ann_info=ann_info)
+
+    def prepare_test_img(self, idx):
+        img = self.get_img(idx)
+        img_info = self.get_img_info(idx)
+        return dict(img=img, img_info=img_info)
 
 
 def main():
     """Load the SHIFT dataset and print the tensor shape of the first batch."""
 
     dataset = SHIFTDataset(
-        data_root='../../SHIFT_dataset/v2/public/discrete/images',
-        ann_file='train/front/det_2d.json',
-        img_prefix='train/front/img.zip',
+        data_root="../../SHIFT_dataset/v2/public/discrete/images",
+        ann_file="train/front/det_2d.json",
+        img_prefix="train/front/img.zip",
         backend_type="zip",
         pipeline=[],
     )
@@ -135,6 +155,7 @@ def main():
         print("img:", data["img"].shape)
         print("ann_info.bboxes:", data["ann_info"]["bboxes"].shape)
         print("ann_info.labels:", data["ann_info"]["labels"].shape)
+        print("ann_info.track_ids:", data["ann_info"]["track_ids"].shape)
         break
 
 

@@ -1,14 +1,13 @@
-
 import os
 import sys
 
-root_dir = os.path.abspath(
-    os.path.join(__file__, os.pardir, os.pardir)
-)
-sys.path.append(root_dir)
-
 import torch
 from torch.utils.data import DataLoader
+
+# Add the root directory of the project to the path. Remove the following two lines
+# if you have installed shift_dev as a package.
+root_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir))
+sys.path.append(root_dir)
 
 from shift_dev import SHIFTDataset
 from shift_dev.types import Keys
@@ -19,7 +18,7 @@ def main():
     """Load the SHIFT dataset and print the tensor shape of the first batch."""
 
     dataset = SHIFTDataset(
-        data_root='../../SHIFT_dataset/v2/public',
+        data_root="../../SHIFT_dataset/v2/public",
         split="train",
         keys_to_load=[
             Keys.images,

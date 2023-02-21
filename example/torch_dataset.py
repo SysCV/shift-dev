@@ -18,7 +18,7 @@ def main():
     """Load the SHIFT dataset and print the tensor shape of the first batch."""
 
     dataset = SHIFTDataset(
-        data_root="../../SHIFT_dataset/v2/public",
+        data_root="./SHIFT_dataset/",
         split="train",
         keys_to_load=[
             Keys.images,

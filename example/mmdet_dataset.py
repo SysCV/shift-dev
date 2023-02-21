@@ -12,7 +12,7 @@ Example
 Below is an example of how to use the SHIFTDataset class.
 
     >>> dataset = SHIFTDataset(
-    >>>     data_root='./shift_dataset/discrete/images'
+    >>>     data_root='./SHIFT_dataset/discrete/images'
     >>>     ann_file='train/front/det_2d.json',
     >>>     img_prefix='train/front/img.zip',
     >>>     backend_type='zip',
@@ -28,6 +28,8 @@ Notes
     must be consistent with the backend_type.
 2.  Since the images are loaded before the pipeline, there is no need to add a 
     `LoadImageFromFile` module in the pipeline again.
+3.  For instance segmentation please use the `det_insseg_2d.json` for the `ann_file`,
+    and add a `LoadAnnotations(with_mask=True)` module in the pipeline.
 """
 
 import json
@@ -151,10 +153,10 @@ class SHIFTDataset(CustomDataset):
 
 
 def main():
-    """Load the SHIFT dataset for instance segmentation."""
+    """Example for loading the SHIFT dataset for instance segmentation."""
 
     dataset = SHIFTDataset(
-        data_root="../../SHIFT_dataset/v2/public/discrete/images",
+        data_root="./SHIFT_dataset/discrete/images",
         ann_file="train/front/det_insseg_2d.json",
         img_prefix="train/front/img.zip",
         backend_type="zip",

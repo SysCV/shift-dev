@@ -45,6 +45,7 @@ def main():
     print(f"Total number of samples: {len(dataset)}.")
 
     # Print the tensor shape of the first batch.
+    print('\n')
     for i, batch in enumerate(dataloader):
         print(f"Batch {i}:")
         for k, data in batch["front"].items():
@@ -52,6 +53,15 @@ def main():
                 print(f"{k}: {data.shape}")
             else:
                 print(f"{k}: {data}")
+        break
+
+    # Print the sample indices within a video.
+    # The video indices groups frames based on their video sequences. They are useful for training on videos.
+    print('\n')
+    video_to_indices = dataset.video_to_indices
+    for video, indices in video_to_indices.items():
+        print(f"Video name: {video}")
+        print(f"Sample indices within a video: {indices}")
         break
 
 

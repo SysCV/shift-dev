@@ -72,6 +72,8 @@ dataset = SHIFTDataset(
         Keys.segmentation_masks,
     ],
     views_to_load=["front"],
+    framerate="images",
+    shift_type="discrete",
     backend=ZipBackend(),  # also supports HDF5Backend(), FileBackend()
     verbose=True,
 )

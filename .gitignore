@@ -136,6 +136,7 @@ dmypy.json
 
 # temp data
 /data
+/SHIFT_dataset
 
 # egg info
 *.egg-info/

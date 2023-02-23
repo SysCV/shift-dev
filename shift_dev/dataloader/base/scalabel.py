@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from collections.abc import Callable, Sequence
-from typing import Any, Dict, Union
+from typing import Dict, Union
 
 import numpy as np
 import torch
@@ -310,13 +310,6 @@ class Scalabel(Dataset, CacheMappingMixin):
             )
             data[Keys.masks] = instance_masks
 
-        if Keys.segmentation_masks in self.keys_to_load:
-            sem_map = self.cats_name2id[Keys.segmentation_masks]
-            semantic_masks = semantic_masks_from_scalabel(
-                labels_used, sem_map, instid_map, image_size, self.bg_as_class
-            )
-            data[Keys.segmentation_masks] = semantic_masks
-
         if Keys.boxes3d in self.keys_to_load:
             boxes3d, classes, track_ids = boxes3d_from_scalabel(
                 labels_used, self.cats_name2id[Keys.boxes3d], instid_map
@@ -342,6 +335,37 @@ class Scalabel(Dataset, CacheMappingMixin):
             # load annotations to input sample
             self._add_annotations(frame, data)
         return data
+
+    @property
+    def video_to_indices(self) -> dict[str, list[int]]:
+        """Group all dataset sample indices (int) by their video ID (str).
+
+        Returns:
+            dict[str, list[int]]: Mapping video to index.
+        """
+        video_to_indices: dict[str, list[int]] = defaultdict(list)
+        video_to_frameidx: dict[str, list[int]] = defaultdict(list)
+        for idx, frame in enumerate(self.frames):
+            if frame.videoName is not None:
+                assert (
+                    frame.frameIndex is not None
+                ), "found videoName but no frameIndex!"
+                video_to_frameidx[frame.videoName].append(frame.frameIndex)
+                video_to_indices[frame.videoName].append(idx)
+
+        # sort dataset indices by frame indices
+        for key, idcs in video_to_indices.items():
+            zip_frame_idx = sorted(zip(video_to_frameidx[key], idcs))
+            video_to_indices[key] = [idx for _, idx in zip_frame_idx]
+        return video_to_indices
+
+    def get_video_indices(self, idx: int) -> list[int]:
+        """Get all dataset indices in a video given a single dataset index."""
+        for indices in self.video_to_indices.values():
+            if idx in indices:
+                return indices
+        raise ValueError(f"Dataset index {idx} not found in video_to_indices!")
+
 
 
 def boxes3d_from_scalabel(

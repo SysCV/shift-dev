@@ -54,6 +54,13 @@ def main():
                 print(f"{k}: {data}")
         break
 
+    # Print the sample indices within a video.
+    video_to_indices = dataset.video_to_indices
+    for video, indices in video_to_indices.items():
+        print(f"Video name: {video}")
+        print(f"Sample indices within a video: {indices}")
+        break
+
 
 if __name__ == "__main__":
     main()

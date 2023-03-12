@@ -144,6 +144,9 @@ class SHIFTDataset(CustomDataset):
         img = self.get_img(idx)
         img_info = self.get_img_info(idx)
         ann_info = self.get_ann_info(idx)
+        # Filter out images without annotations during training
+        if len(ann_info["bboxes"]) == 0:
+            return None
         results = dict(img=img, img_info=img_info, ann_info=ann_info)
         self.pre_pipeline(results)
         return self.pipeline(results)

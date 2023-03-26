@@ -31,7 +31,8 @@ def main():
             Keys.segmentation_masks,
         ],
         views_to_load=["front"],
-        backend=ZipBackend(),  # also supports HDF5Backend(), FileBackend()
+        shift_type="discrete",      # also supports "continuous/1x", "continuous/10x", "continuous/100x"
+        backend=ZipBackend(),       # also supports HDF5Backend(), FileBackend()
         verbose=True,
     )
 

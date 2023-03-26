@@ -56,6 +56,8 @@ class _SHIFTScalabelLabels(Scalabel):
         data_file: str = "",
         annotation_file: str = "",
         view: str = "front",
+        framerate: str = "images",
+        shift_type: str = "discrete",
         backend: DataBackend = HDF5Backend(),
         verbose: bool = False,
         num_workers: int = 1,
@@ -80,14 +82,22 @@ class _SHIFTScalabelLabels(Scalabel):
         assert view in _SHIFTScalabelLabels.VIEWS, f"Invalid view '{view}'"
 
         # Set attributes
-        annotation_path = os.path.join(
-            data_root, "discrete", "images", split, view, annotation_file
-        )
         ext = _get_extension(backend)
-        data_path = os.path.join(
-            data_root, "discrete", "images", split, view, f"{data_file}{ext}"
-        )
-
+        if shift_type.startswith("continuous"):
+            shift_speed = shift_type.split("/")[-1]
+            annotation_path = os.path.join(
+                data_root, "continuous", framerate, shift_speed, split, view, annotation_file
+            )
+            data_path = os.path.join(
+                data_root, "continuous", framerate, shift_speed, split, view, f"{data_file}{ext}"
+            )
+        else:
+            annotation_path = os.path.join(
+                data_root, "discrete", framerate, split, view, annotation_file
+            )
+            data_path = os.path.join(
+                data_root, "discrete", framerate, split, view, f"{data_file}{ext}"
+            )
         super().__init__(data_path, annotation_path, data_backend=backend, **kwargs)
 
     def _generate_mapping(self) -> ScalabelData:
@@ -261,9 +271,17 @@ class SHIFTDataset(Dataset):
         self.backend = backend
         self.verbose = verbose
         self.ext = _get_extension(backend)
-        self.annotation_base = os.path.join(
-            self.data_root, self.shift_type, self.framerate, self.split
-        )
+        if self.shift_type.startswith("continuous"):
+            shift_speed = self.shift_type.split("/")[-1]
+            self.annotation_base = os.path.join(
+                self.data_root, "continuous", self.framerate, shift_speed, self.split
+            )
+        else:
+            self.annotation_base = os.path.join(
+                self.data_root, self.shift_type, self.framerate, self.split
+            )
+        if self.verbose:
+            logger.info(f"Base: {self.annotation_base}. Backend: {self.backend}")
 
         # Get the data groups' classes that need to be loaded
         self._data_groups_to_load = self._get_data_groups(keys_to_load)
@@ -283,6 +301,8 @@ class SHIFTDataset(Dataset):
                     data_file="lidar",
                     annotation_file="det_3d.json",
                     view=view,
+                    framerate=self.framerate,
+                    shift_type=self.shift_type,
                     keys_to_load=(Keys.points3d, *self.DATA_GROUPS["det_3d"]),
                     backend=backend,
                     num_workers=num_workers,
@@ -304,6 +324,8 @@ class SHIFTDataset(Dataset):
                         data_file="img",
                         annotation_file=f"{group}.json",
                         view=view,
+                        framerate=self.framerate,
+                        shift_type=self.shift_type,
                         keys_to_load=keys_to_load,
                         backend=backend,
                         num_workers=num_workers,

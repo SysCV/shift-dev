@@ -42,9 +42,8 @@ import sys
 
 import mmcv
 import numpy as np
-from mmdet.datasets.builder import DATASETS
-from mmdet.datasets.custom import CustomDataset
-from mmdet.datasets.pipelines import LoadAnnotations
+from mmdet3d.datasets.builder import DATASETS
+from mmdet3d.datasets.custom import CustomDataset
 
 # Add the root directory of the project to the path. Remove the following two lines
 # if you have installed shift_dev as a package.

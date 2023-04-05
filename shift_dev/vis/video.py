@@ -150,7 +150,7 @@ def main():
         args.view,
         vis_type,
         video_path,
-        convert_to_gray=args.no_gray_background,
+        convert_to_gray=not args.no_gray_background,
     )
 
 

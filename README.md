@@ -109,19 +109,36 @@ Note: The converted HDF5 file will maintain the same file structure of the zip f
 <h3>Reading from HDF5 files</h3>
 </summary>
 
-Below is a code snippet for reading one image from an HDF5 file.
+Below is a code snippet for reading images from an HDF5 file.
 ```python
 import io
 import h5py
 from PIL import Image
 
-
-file_key = "0123-abcd/00000001_img_front.jpg"
-
+name = "0123-abcd/00000000_img_front.jpg"
 with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
-    bytes = bytearray(hdf5[file_key])                     # select the file we want
-    img = Image.open(io.BytesIO(bytes))                  # same as opening an ordinary png file from IO stream.
+    bytes = bytearray(hdf5[name])                       # select the file we want
+    img = Image.open(io.BytesIO(bytes))                 # same as opening an ordinary png file from IO stream.
 ```
+
+Below is a code snippet for reading point clouds from an HDF5 file.
+```python
+import io
+import h5py
+import plyfile
+
+name = "0123-abcd/00000000_lidar_center.ply"
+bytes = io.BytesIO(np.array(hdf5[name]))              # create an IO buffer
+plydata = plyfile.PlyData.read(bytes)                 # parse point cloud from the buffer
+
+num_points = plydata['vertex'].count
+arr = np.zeros((num_points, 4), dtype=np.float32)     # array of [n, 4], columns are: x, y, z, intensity
+arr[:, 0] = plydata['vertex'].data['x']
+arr[:, 1] = plydata['vertex'].data['y']
+arr[:, 2] = plydata['vertex'].data['z']
+arr[:, 3] = plydata['vertex'].data['intensity']
+```
+
 </details>
 
 <details>

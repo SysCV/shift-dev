@@ -25,7 +25,7 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 
 
 ## Downloading
-We recommend downloading SHIFT using our Python download script. You can select the subset of views, data group, splits and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
+We recommend downloading SHIFT using our Python download script. You can select the subset of views, data groups, splits, and framerates of the data to download. A usage example is shown below. You can find the abbreviation for views and data groups in the following tables.
 
 ```bash
 python download.py --view  "[front, left_stereo]" \   # list of view abbreviation to download

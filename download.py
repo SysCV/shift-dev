@@ -188,7 +188,7 @@ def main():
         for split, split_name in splits:
             for view, view_name in views:
                 for group, ext, group_name in data_groups:
-                    if rate == "videos" and group in ["img", "semseg"]:
+                    if rate == "videos" and group in ["img"]:
                         ext = "tar"
                     if args.shift == "discrete":
                         url = get_url_discrete(rate, split, view, group, ext)

@@ -46,7 +46,7 @@ python download.py --view "[front]" --group "all" --split "all" --framerate "[im
 ```
 
 ### Manually download
-You could find the download links in our [download page](https://www.vis.xyz/shift/download/) or [file server](https://dl.cv.ethz.ch/shift/).
+You could find the download links on our [download page](https://www.vis.xyz/shift/download/) or [file server](https://dl.cv.ethz.ch/shift/).
 
 ## Data Loaders
 
@@ -82,12 +82,16 @@ dataset = SHIFTDataset(
 
 
 ## Tools
-### Packing zip file into HDF5
-Instead of unzipping the the downloaded zip files, you can also can convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large of dataset in a single file and, meanwhile, to support efficient I/O for training purpose. Converting to HDF5 is a good practice in an environment where the number of files that can be stored are limited. 
+<details>
+<summary>
+<h3>Packing Zip file into HDF5 </h3>
+</summary>
+
+Instead of unzipping the downloaded zip files, you can also convert them into corresponding [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files. HDF5 file is designed to store a large dataset in a single file and, meanwhile, to support efficient I/O for training purposes. Converting to HDF5 is a good practice in an environment where the number of files that can be stored is limited. 
 
 However, if you want to preprocess the data before using them, we **don't recommend** converting them into HDF5 before the processing, which will complicate the loading.
 
-**Example 1**: Packing directly from the donwloaded zip files. (You can set the number of processes by `-j`)
+**Example 1**: Packing directly from the downloaded zip files. (You can set the number of processes by `-j`)
 ```bash
 python -m shift_dev.io.to_hdf5 "./data/discrete/**/*.zip" --zip -j 1
 ```
@@ -97,10 +101,15 @@ python -m shift_dev.io.to_hdf5 "./data/discrete/**/*.zip" --zip -j 1
 python -m shift_dev.io.to_hdf5 "./data/discrete/images/val/left_45/img/"
 ```
 
-Note: The converted HDF5 file will maintain the same file structure of the zip file / folder, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
+Note: The converted HDF5 file will maintain the same file structure of the zip file/folder, i.e., `<seq>/<frame>_<group>_<view>.<ext>`.
+</details>
 
-### Reading from HDF5 files
-Below is a code snippet for reading one image from a HDF5 file.
+<details>
+<summary>
+<h3>Reading from HDF5 files</h3>
+</summary>
+
+Below is a code snippet for reading one image from an HDF5 file.
 ```python
 import io
 import h5py
@@ -113,9 +122,14 @@ with h5py.File("/path/to/file.hdf5", "r") as hdf5:      # load the HDF5 file
     bytes = bytearray(hdf5[file_key])                     # select the file we want
     img = Image.open(io.BytesIO(bytes))                  # same as opening an ordinary png file from IO stream.
 ```
+</details>
 
-### Decompress video files
-For easier retrieval of frames during training, we recommend decompressing all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames. 
+<details>
+<summary>
+<h3>Decompress video files</h3>
+</summary>
+
+For easier retrieval of frames during training, we recommend decompressing all video sequences into image frames before training. Make sure there is enough disk space to store the decompressed frames. The video sequences are used for the RGB data group only.
 
 The mode option (`--mode, -m`) controls the storage type of the decompressed frames. When the mode is set to `folder` (default option) the frames are extracted to local file systems directly; when the mode is set to `zip`, `tar` or `hdf5`, the frames are stored in the corresponding archive file, e.g., `img_decompressed.zip`.  
 
@@ -126,7 +140,7 @@ All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<
     python -m shift_dev.io.decompress_videos "discrete/videos/val/front/*.tar" -m "zip" -j 1
     ```
 
-- To ensure reproducible decompression of videos, we recommend to use our Docker image. You could refer to the Docker engine's [installation doc](https://docs.docker.com/engine/install/).
+- To ensure reproducible decompression of videos, we recommend using our Docker image. You could refer to the Docker engine's [installation doc](https://docs.docker.com/engine/install/).
     ```bash
     # build and install our Docker image
     docker build -t shift_dataset_decompress .
@@ -135,8 +149,12 @@ All frames will be saved using the same name pattern of `<seq>/<frame>_<group>_<
     docker run -v <path/to/data>:/data -e MODE=hdf5 shift_dataset_decompress
     ```
     Here, `<path/to/data>` denotes the root path under which all tar files will be processed recursively. The mode and number of jobs can be configured through environment variables `MODE` and `JOBS`. 
+</details>
 
-### Visualization
+<details>
+<summary>
+<h3>Visualization</h3>
+</summary>
 
 We provide a visualization tool for object-level labels (e.g., bounding box, instance segmentation). The main rendering functions are provided in `shift_dev/vis/render.py` file. We believe you can reuse many of them for other kinds of visualization. 
 
@@ -148,8 +166,8 @@ python -m shift_dev.vis.video <seq_id> \    # specify the video sequence
     -o <path/for/output> \                  # output path
     --view front                            # specify the view, needed to be corresponded with images and label file
 ```
-This command will render an MP4 video with the bounding boxes or instance masks plotted over the background images. Checkout the example [here](https://www.youtube.com/watch?v=BsqGrDd2Kzw) (starting from 00:10)!
-
+This command will render an MP4 video with the bounding boxes or instance masks plotted over the background images. Check out the example [here](https://www.youtube.com/watch?v=BsqGrDd2Kzw) (starting from 00:10)!
+</details>
 
 
 ## Citation

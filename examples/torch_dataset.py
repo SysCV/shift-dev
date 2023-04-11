@@ -21,18 +21,23 @@ def main():
 
     dataset = SHIFTDataset(
         data_root="./SHIFT_dataset/",
-        split="train",
+        split="val",
         keys_to_load=[
-            Keys.images,
-            Keys.intrinsics,
-            Keys.boxes2d,
-            Keys.boxes2d_classes,
-            Keys.boxes2d_track_ids,
-            Keys.segmentation_masks,
+            Keys.images,                # note: images, shape (1, 3, H, W), uint8 (RGB)
+            Keys.intrinsics,            # note: camera intrinsics, shape (3, 3)
+            Keys.boxes2d,               # note: 2D boxes in image coordinate, (x1, y1, x2, y2)
+            Keys.boxes2d_classes,       # note: class indices, shape (num_boxes,)
+            Keys.boxes2d_track_ids,     # note: object ids, shape (num_ins,)
+            Keys.boxes3d,               # note: 3D boxes in camera coordinate, (x, y, z, dim_x, dim_y, dim_z, rot_x, rot_y, rot_z)
+            Keys.boxes3d_classes,       # note: class indices, shape (num_boxes,), the same as 'boxes2d_classes'
+            Keys.boxes3d_track_ids,     # note: object ids, shape (num_ins,), the same as 'boxes2d_track_ids'
+            Keys.segmentation_masks,    # note: semantic masks, shape (1, H, W), long
+            Keys.masks,                 # note: instance masks, shape (num_ins, H, W), binary
+            Keys.depth_maps,            # note: depth maps, shape (1, H, W), float (meters)
         ],
         views_to_load=["front"],
-        shift_type="discrete",      # also supports "continuous/1x", "continuous/10x", "continuous/100x"
-        backend=ZipBackend(),       # also supports HDF5Backend(), FileBackend()
+        shift_type="discrete",          # also supports "continuous/1x", "continuous/10x", "continuous/100x"
+        backend=ZipBackend(),           # also supports HDF5Backend(), FileBackend()
         verbose=True,
     )
 
@@ -48,12 +53,14 @@ def main():
     # Print the tensor shape of the first batch.
     print('\n')
     for i, batch in enumerate(dataloader):
-        print(f"Batch {i}:")
+        print(f"Batch {i}:\n")
+        print(f"{'Item':20} {'Shape':35} {'Min':10} {'Max':10}")
+        print("-" * 80)
         for k, data in batch["front"].items():
             if isinstance(data, torch.Tensor):
-                print(f"{k}: {data.shape}")
+                print(f"{k:20} {str(data.shape):35} {data.min():10.2f} {data.max():10.2f}")
             else:
-                print(f"{k}: {data}")
+                print(f"{k:20} {data}")
         break
 
     # Print the sample indices within a video.

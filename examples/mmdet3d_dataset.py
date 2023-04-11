@@ -1,7 +1,7 @@
 """SHIFT dataset for mmdet3d.
 
 This is a reference code for mmdet3d style dataset of the SHIFT dataset. Note that
-only single-view 3D detection and tracking are supported.
+only monocular 3D detection and tracking are supported.
 Please refer to the torch version of the dataloader for multi-view multi-task cases.
 
 The codes are tested in mmdet3d-1.0.0.
@@ -14,8 +14,8 @@ Below is a snippet showing how to add the SHIFTDataset class in mmdet config fil
     >>> dict(
     >>>     type='SHIFTDataset',
     >>>     data_root='./SHIFT_dataset/discrete/images'
-    >>>     ann_file='train/front/det_3d.json',
-    >>>     img_prefix='train/front/img.zip',
+    >>>     ann_file='./SHIFT_dataset/discrete/images/train/front/det_3d.json',
+    >>>     img_prefix='./SHIFT_dataset/discrete/images/train/front/img.zip',
     >>>     backend_type='zip',
     >>>     pipeline=[
     >>>        ...
@@ -203,9 +203,9 @@ if __name__ == "__main__":
     """Example for loading the SHIFT dataset for monocular 3D detection."""
 
     dataset = SHIFTDataset(
-        data_root="./data/discrete/images",
-        ann_file="./data/discrete/images/val/front/det_3d.json",
-        img_prefix="./data/discrete/images/val/front/img.zip",
+        data_root="./SHIFT_dataset/discrete/images",
+        ann_file="./SHIFT_dataset/discrete/images/val/front/det_3d.json",
+        img_prefix="./SHIFT_dataset/discrete/images/val/front/img.zip",
         box_type_3d="Camera",
         backend_type="zip",
         pipeline=[LoadAnnotations3D(with_bbox=True)],

@@ -23,7 +23,7 @@ class VideoRender(_BaseRender):
     ):
         viewer = LabelViewer(UIConfig(height=800, width=1280))
         print(output_path)
-        writer = cv2.VideoWriter(output_path, self.fourcc, fps, (1280, 800))
+        writer = cv2.VideoWriter(output_path, self.fourcc, self.fps, (1280, 800))
         frames = self.read_scalabel(vidoe_name)
         for frame in tqdm.tqdm(frames):
             frame_number = int(frame.name.split("_")[0])
@@ -58,7 +58,7 @@ class VideoRender(_BaseRender):
                     with_rle=False,
                     alpha=alpha,
                 )
-            elif type == "del_3d":
+            elif type == "det_3d":
                 viewer.draw(
                     img_g,
                     frame,
@@ -150,7 +150,7 @@ def main():
         args.view,
         vis_type,
         video_path,
-        convert_to_gray=args.gray_background,
+        convert_to_gray=not args.no_gray_background,
     )
 
 

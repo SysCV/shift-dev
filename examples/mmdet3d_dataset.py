@@ -1,7 +1,7 @@
 """SHIFT dataset for mmdet3d.
 
 This is a reference code for mmdet3d style dataset of the SHIFT dataset. Note that
-only monocular 3D detection and tracking are supported.
+only monocular tasks are supported (i.e., 2D/3D detection, tracking, 2D instance segmentation, depth estimation).
 Please refer to the torch version of the dataloader for multi-view multi-task cases.
 
 The codes are tested in mmdet3d-1.0.0.
@@ -14,11 +14,11 @@ Below is a snippet showing how to add the SHIFTDataset class in mmdet config fil
     >>> dict(
     >>>     type='SHIFTDataset',
     >>>     data_root='./SHIFT_dataset/discrete/images'
-    >>>     ann_file='./SHIFT_dataset/discrete/images/train/front/det_3d.json',
-    >>>     img_prefix='./SHIFT_dataset/discrete/images/train/front/img.zip',
+    >>>     ann_file='train/front/det_3d.json',
+    >>>     img_prefix='train/front/img.zip',
     >>>     backend_type='zip',
     >>>     pipeline=[
-    >>>        ...
+    >>>        dict(type='LoadAnnotations3D', with_bbox=True)
     >>>     ]
     >>> )
 
@@ -34,14 +34,12 @@ Notes
     to add a `LoadImageFromFileMono3D`/`LoadMultiViewImageFromFiles` module in the pipeline again.
 """
 
-import json
 import os
 import sys
 
 import mmcv
 import numpy as np
 from mmdet3d.core.bbox import CameraInstance3DBoxes
-from mmdet3d.core.bbox.structures.box_3d_mode import Box3DMode
 from mmdet3d.datasets.builder import DATASETS
 from mmdet3d.datasets.custom_3d import Custom3DDataset
 from mmdet3d.datasets.pipelines import LoadAnnotations3D
@@ -60,15 +58,37 @@ class SHIFTDataset(Custom3DDataset):
 
     WIDTH = 1280
     HEIGHT = 800
+    MAX_DEPTH = 1000.0
 
-    def __init__(self, *args, img_prefix: str = "", backend_type: str = "file", **kwargs):
+    def __init__(
+        self, 
+        data_root: str, 
+        ann_file: str, 
+        img_prefix: str,
+        insseg_ann_file: str = "",
+        depth_prefix: str = "",
+        backend_type: str = "file", 
+        **kwargs
+    ):
         """Initialize the SHIFT dataset.
 
         Args:
-            backend_type (str, optional): The type of the backend. Must be one of
-                ['file', 'zip', 'hdf5']. Defaults to "file".
+            data_root (str): The root path of the dataset.
+            ann_file (str): The path to the annotation file for 3D detection.
+            img_prefix (str): The base path to the image directory or archive.
+            insseg_ann_file (str, optional): The path to the annotation file for 2D instance segmentation. If set, the
+                instance masks will be loaded. Defaults to "".
+            depth_prefix (str, optional): The base path to the depth directory or archive. If set, the depth maps will
+                be loaded. Defaults to "".
+            backend_type (str, optional): The type of the backend. Must be one of ['file', 'zip', 'hdf5'].
+                Defaults to "file".
         """
-        self.img_prefix = img_prefix
+        self.data_root = data_root
+        self.ann_file = os.path.join(self.data_root, ann_file)
+        self.img_prefix = os.path.join(self.data_root, img_prefix)
+
+        self.insseg_ann_file = os.path.join(self.data_root, insseg_ann_file) if insseg_ann_file != "" else ""
+        self.depth_prefix = os.path.join(self.data_root, depth_prefix) if depth_prefix != "" else ""
         self.backend_type = backend_type
         if backend_type == "file":
             self.backend = None
@@ -90,23 +110,25 @@ class SHIFTDataset(Custom3DDataset):
             ],
             dtype=np.float32,
         )
-        super().__init__(*args, **kwargs)
+
+        super().__init__(data_root, self.ann_file, **kwargs)
 
     def load_annotations(self, ann_file):
         print("Loading annotations...")
         data = mmcv.load(ann_file, file_format='json')
+        if self.insseg_ann_file != "":
+            data_insseg = mmcv.load(self.insseg_ann_file, file_format='json')
+        else:
+            data_insseg = None
+
         data_infos = []
         for img_idx, img_info in enumerate(data["frames"]):
-            img_filename = os.path.join(
-                self.img_prefix, img_info["videoName"], img_info["name"]
-            )
-
             boxes = []
             boxes_3d = []
             labels = []
             track_ids = []
-
-            for label in img_info["labels"]:
+            masks = []
+            for i, label in enumerate(img_info["labels"]):
                 box2d = label["box2d"]
                 box3d = label["box3d"]
                 boxes.append((box2d["x1"], box2d["y1"], box2d["x2"], box2d["y2"]))
@@ -115,6 +137,8 @@ class SHIFTDataset(Custom3DDataset):
                 )
                 labels.append(self.CLASSES.index(label["category"]))
                 track_ids.append(label["id"])
+                if data_insseg is not None:
+                    masks.append(data_insseg["frames"][img_idx]["labels"][i]["rle"])
 
             data_infos.append(
                 dict(
@@ -122,8 +146,11 @@ class SHIFTDataset(Custom3DDataset):
                     lidar_points=dict(lidar_path=""),   # dummy path for mmdet3d compatibility
                     image=dict(
                         image_idx=img_idx,
-                        image_path=img_filename,
-                        image_shape=np.array([self.HEIGHT, self.WIDTH], dtype=np.int32)
+                        image_name=img_info["name"],
+                        video_name=img_info["videoName"],
+                        image_shape=np.array([self.HEIGHT, self.WIDTH], dtype=np.int32),
+                        width=self.WIDTH,  # redundant but required by mmdet pipeline (LoadAnnotations(with_mask=True))
+                        height=self.HEIGHT,
                     ),
                     annos=dict(
                         num=len(boxes),
@@ -132,13 +159,13 @@ class SHIFTDataset(Custom3DDataset):
                         labels=np.array(labels).astype(np.int64),
                         names=[self.CLASSES[label] for label in labels],
                         track_ids=np.array(track_ids).astype(np.int64),
+                        masks=masks if len(masks) > 0 else None,
                     ),
                 )
             )
         return data_infos
-
-    def get_img(self, idx):
-        filename = self.data_infos[idx]["image"]["image_path"]
+    
+    def read_image(self, filename):
         if self.backend_type == "zip":
             img_bytes = self.backend.get(filename)
             return mmcv.imfrombytes(img_bytes)
@@ -147,6 +174,26 @@ class SHIFTDataset(Custom3DDataset):
             return mmcv.imfrombytes(img_bytes)
         else:
             return mmcv.imread(filename)
+
+    def get_img(self, idx):
+        img_filename = os.path.join(
+            self.img_prefix,
+            self.data_infos[idx]["image"]["video_name"],
+            self.data_infos[idx]["image"]["image_name"],
+        )
+        return self.read_image(img_filename)
+        
+    def get_depth(self, idx):
+        depth_filename = os.path.join(
+            self.depth_prefix,
+            self.data_infos[idx]["image"]["video_name"],
+            self.data_infos[idx]["image"]["image_name"].replace("jpg", "png").replace("img", "depth"),
+        )
+        depth_img = self.read_image(depth_filename)
+        depth_img = depth_img.astype(np.float32)
+        depth = depth_img[:, :, 0] * 256 * 256 + depth_img[:, :, 1] * 256 + depth_img[:, :, 2]
+        depth = depth / MAX_DEPTH
+        return depth
 
     def get_img_info(self, idx):
         return self.data_infos[idx]["image"]
@@ -158,12 +205,14 @@ class SHIFTDataset(Custom3DDataset):
             gt_bboxes_3d = annos["boxes_3d"]
             gt_bboxes = annos["boxes_2d"]
             gt_names = annos["names"]
+            gt_masks = annos["masks"]
             gt_track_ids = annos["track_ids"]
         else:
             gt_labels = np.zeros((0, ), dtype=np.int64)
             gt_bboxes_3d = np.zeros((0, 7), dtype=np.float32)
             gt_bboxes = np.zeros((0, 4), dtype=np.float32)
             gt_names = []
+            gt_masks = []
             gt_track_ids = np.zeros((0, ), dtype=np.int64)
 
         gt_bboxes_3d = CameraInstance3DBoxes(
@@ -173,6 +222,7 @@ class SHIFTDataset(Custom3DDataset):
         ann = dict(
             bboxes=gt_bboxes,
             labels=gt_labels,
+            masks=gt_masks,
             track_ids=gt_track_ids,
             gt_names=gt_names,
             gt_bboxes_3d=gt_bboxes_3d,
@@ -188,6 +238,8 @@ class SHIFTDataset(Custom3DDataset):
         if self.filter_empty_gt and len(ann_info["gt_bboxes_3d"]) == 0:
             return None
         results = dict(img=img, img_info=img_info, cam2img=self.cam_intrinsic, ann_info=ann_info)
+        if self.depth_prefix != "":
+            results["gt_depth"] = self.get_depth(idx)
         self.pre_pipeline(results)
         return self.pipeline(results)
 
@@ -204,23 +256,39 @@ if __name__ == "__main__":
 
     dataset = SHIFTDataset(
         data_root="./SHIFT_dataset/discrete/images",
-        ann_file="./SHIFT_dataset/discrete/images/val/front/det_3d.json",
-        img_prefix="./SHIFT_dataset/discrete/images/val/front/img.zip",
+        ann_file="val/front/det_3d.json",
+        insseg_ann_file="val/front/det_insseg_2d.json",
+        img_prefix="val/front/img.zip",
+        depth_prefix="val/front/depth.zip",
         box_type_3d="Camera",
         backend_type="zip",
-        pipeline=[LoadAnnotations3D(with_bbox=True)],
+        pipeline=[LoadAnnotations3D(with_bbox=True, with_mask=True)],
     )
 
     # Print the dataset size
     print(f"Total number of samples: {len(dataset)}.")
 
-    # Print the tensor shape of the first batch.
+    # Check the tensor shapes.
     for i, data in enumerate(dataset):
-        print(f"Sample {i}:")
+        print(f"Sample {i}")
+
+        # Image and camera intrinsic matrix
         print("img:", data["img"].shape)
-        print("annos.gt_bboxes_3d:", data["ann_info"]["gt_bboxes_3d"])
-        print("annos.gt_labels_3d:", data["ann_info"]["gt_labels_3d"])
-        print("annos.gt_bboxes:", data["ann_info"]["bboxes"])
-        print("annos.gt_labels:", data["ann_info"]["labels"])
-        print("annos.track_ids:", data["ann_info"]["track_ids"])
+        print("cam2img:", data["cam2img"].shape)
+
+        # 3D bounding boxes
+        print("gt_bboxes_3d:", data["gt_bboxes_3d"])
+        print("gt_labels_3d:", data["gt_labels_3d"])
+
+        # 2D bounding boxes and masks
+        # Note that the mask labels are shared with 'gt_labels_3d'.
+        print("gt_bboxes:", data["gt_bboxes"])
+        print("gt_masks:", data["gt_masks"])
+
+        # Depth map
+        print("gt_depth:", data["gt_depth"].shape)
+
+        # Track IDs
+        print("track_ids:", data["ann_info"]["track_ids"])
+
         break

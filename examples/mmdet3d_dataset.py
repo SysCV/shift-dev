@@ -67,7 +67,8 @@ class SHIFTDataset(Custom3DDataset):
         img_prefix: str,
         insseg_ann_file: str = "",
         depth_prefix: str = "",
-        backend_type: str = "file", 
+        backend_type: str = "file",
+        img_to_float32: bool = False,
         **kwargs
     ):
         """Initialize the SHIFT dataset.
@@ -82,10 +83,12 @@ class SHIFTDataset(Custom3DDataset):
                 be loaded. Defaults to "".
             backend_type (str, optional): The type of the backend. Must be one of ['file', 'zip', 'hdf5'].
                 Defaults to "file".
+            img_to_float32 (bool, optional): Whether to convert the loaded image to float32. Defaults to False.
         """
         self.data_root = data_root
         self.ann_file = os.path.join(self.data_root, ann_file)
         self.img_prefix = os.path.join(self.data_root, img_prefix)
+        self.img_to_float32 = img_to_float32
 
         self.insseg_ann_file = os.path.join(self.data_root, insseg_ann_file) if insseg_ann_file != "" else ""
         self.depth_prefix = os.path.join(self.data_root, depth_prefix) if depth_prefix != "" else ""
@@ -168,12 +171,15 @@ class SHIFTDataset(Custom3DDataset):
     def read_image(self, filename):
         if self.backend_type == "zip":
             img_bytes = self.backend.get(filename)
-            return mmcv.imfrombytes(img_bytes)
+            img = mmcv.imfrombytes(img_bytes)
         elif self.backend_type == "hdf5":
             img_bytes = self.backend.get(filename)
-            return mmcv.imfrombytes(img_bytes)
+            img = mmcv.imfrombytes(img_bytes)
         else:
-            return mmcv.imread(filename)
+            img = mmcv.imread(filename)
+        if self.img_to_float32:
+            return img.astype(np.float32) / 255.0
+        return img
 
     def get_img(self, idx):
         img_filename = os.path.join(
@@ -231,7 +237,7 @@ class SHIFTDataset(Custom3DDataset):
         return ann
 
     def prepare_train_data(self, idx):
-        img = self.get_img(idx)
+        img = [self.get_img(idx)]  # Note: mmdet3d expects a list of images
         img_info = self.get_img_info(idx)
         ann_info = self.get_ann_info(idx)
         # Filter out images without annotations during training
@@ -242,14 +248,21 @@ class SHIFTDataset(Custom3DDataset):
             results["gt_depth"] = self.get_depth(idx)
         # Add lidar2cam matrix for compatibility (e.g., PETR)
         results["lidar2cam"] = np.eye(4)
+        # Set initial shape for mmdet3d pipeline compatibility
+        results["img_shape"] = img[0].shape
+        results["ori_shape"] = img[0].shape
+        results["pad_shape"] = img[0].shape
         self.pre_pipeline(results)
         return self.pipeline(results)
 
     def prepare_test_data(self, idx):
-        img = self.get_img(idx)
+        img = [self.get_img(idx)]
         img_info = self.get_img_info(idx)
         results = dict(img=img, img_info=img_info, cam2img=self.cam_intrinsic)
         results["lidar2cam"] = np.eye(4)
+        results["img_shape"] = img[0].shape
+        results["ori_shape"] = img[0].shape
+        results["pad_shape"] = img[0].shape
         self.pre_pipeline(results)
         return self.pipeline(results)
 

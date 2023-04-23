@@ -240,6 +240,8 @@ class SHIFTDataset(Custom3DDataset):
         results = dict(img=img, img_info=img_info, cam2img=self.cam_intrinsic, ann_info=ann_info)
         if self.depth_prefix != "":
             results["gt_depth"] = self.get_depth(idx)
+        # Add lidar2cam matrix for compatibility (e.g., PETR)
+        results["lidar2cam"] = np.eye(4)
         self.pre_pipeline(results)
         return self.pipeline(results)
 
@@ -247,6 +249,7 @@ class SHIFTDataset(Custom3DDataset):
         img = self.get_img(idx)
         img_info = self.get_img_info(idx)
         results = dict(img=img, img_info=img_info, cam2img=self.cam_intrinsic)
+        results["lidar2cam"] = np.eye(4)
         self.pre_pipeline(results)
         return self.pipeline(results)
 

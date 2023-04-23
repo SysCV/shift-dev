@@ -249,9 +249,10 @@ class SHIFTDataset(Custom3DDataset):
         # Add lidar2cam matrix for compatibility (e.g., PETR)
         results["lidar2cam"] = np.eye(4)
         # Set initial shape for mmdet3d pipeline compatibility
-        results["img_shape"] = img[0].shape
-        results["ori_shape"] = img[0].shape
-        results["pad_shape"] = img[0].shape
+        img_shape = img[0][..., np.newaxis].shape
+        results["img_shape"] = img_shape
+        results["ori_shape"] = img_shape
+        results["pad_shape"] = img_shape
         self.pre_pipeline(results)
         return self.pipeline(results)
 
@@ -260,9 +261,10 @@ class SHIFTDataset(Custom3DDataset):
         img_info = self.get_img_info(idx)
         results = dict(img=img, img_info=img_info, cam2img=self.cam_intrinsic)
         results["lidar2cam"] = np.eye(4)
-        results["img_shape"] = img[0].shape
-        results["ori_shape"] = img[0].shape
-        results["pad_shape"] = img[0].shape
+        img_shape = img[0][..., np.newaxis].shape
+        results["img_shape"] = img_shape
+        results["ori_shape"] = img_shape
+        results["pad_shape"] = img_shape
         self.pre_pipeline(results)
         return self.pipeline(results)
 

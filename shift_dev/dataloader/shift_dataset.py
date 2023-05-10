@@ -386,8 +386,9 @@ class SHIFTDataset(Dataset):
 
         # Convert to depth
         depth = image[:, :, 2] * 256 * 256 + image[:, :, 1] * 256 + image[:, :, 0]
+        depth /= 16777216.0  # 256 ** 3
         return torch.as_tensor(
-            np.ascontiguousarray(depth / max_depth),
+            np.ascontiguousarray(depth * max_depth),
             dtype=torch.float32,
         ).unsqueeze(0)
 

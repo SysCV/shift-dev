@@ -58,7 +58,7 @@ class SHIFTDataset(Custom3DDataset):
 
     WIDTH = 1280
     HEIGHT = 800
-    MAX_DEPTH = 1000.0
+    DEPTH_FACTOR = 16777.216  #  256 ** 3 / 1000.0
 
     def __init__(
         self, 
@@ -198,7 +198,7 @@ class SHIFTDataset(Custom3DDataset):
         depth_img = self.read_image(depth_filename)
         depth_img = depth_img.astype(np.float32)
         depth = depth_img[:, :, 0] * 256 * 256 + depth_img[:, :, 1] * 256 + depth_img[:, :, 2]
-        depth = depth / MAX_DEPTH
+        depth = depth * DEPTH_FACTOR
         return depth
 
     def get_img_info(self, idx):

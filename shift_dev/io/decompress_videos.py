@@ -5,7 +5,6 @@ import glob
 import multiprocessing as mp
 import os
 import shutil
-from asyncore import write
 from functools import partial
 
 import cv2

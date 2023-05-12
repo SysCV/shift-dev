@@ -83,6 +83,7 @@ class SHIFTDataset(CustomDataset):
             )
 
     def load_annotations(self, ann_file):
+        print("Loading annotations...")
         with open(ann_file, "r") as f:
             data = json.load(f)
 

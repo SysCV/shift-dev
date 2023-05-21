@@ -255,8 +255,13 @@ class SHIFTDataset(Custom3DDataset):
         results = dict(img=img, img_info=img_info, cam2img=self.cam_intrinsic, ann_info=ann_info)
         if self.depth_prefix != "":
             results["gt_depth"] = self.get_depth(idx)
+            
         # Add lidar2cam matrix for compatibility (e.g., PETR)
-        results["lidar2cam"] = np.eye(4)
+        if self.box_mode_3d == Box3DMode.LIDAR:
+            results["lidar2cam"] = np.array([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
+        elif self.box_mode_3d == Box3DMode.DEPTH:
+            results["depth2cam"] = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+
         # Set initial shape for mmdet3d pipeline compatibility
         img_shape = img[0][..., np.newaxis].shape
         results["img_shape"] = img_shape

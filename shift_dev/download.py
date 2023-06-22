@@ -42,7 +42,9 @@ FRAME_RATES = [("images", "images (1 fps)"), ("videos", "videos (10 fps)")]
 SPLITS = [
     ("train", "training set"),
     ("val", "validation set"),
+    ("minival", "mini validation set (for online evaluation)"),
     ("test", "testing set"),
+    ("minitest", "mini testing set (for online evaluation)"),
 ]
 
 VIEWS = [
@@ -62,7 +64,8 @@ DATA_GROUPS = [
     ("semseg", "zip", "Semantic Segmentation"),
     ("det_insseg_2d", "json", "Instance Segmentation"),
     ("flow", "zip", "Optical Flow"),
-    ("depth", "zip", "Depth Maps"),
+    ("depth", "zip", "Depth Maps (24-bit)"),
+    ("depth_8bit", "zip", "Depth Maps (8-bit)"),
     ("seq", "csv", "Sequence Info"),
     ("lidar", "zip", "LiDAR Point Cloud"),
 ]

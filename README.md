@@ -19,6 +19,7 @@ This repo contains tools and scripts for [SHIFT Dataset](https://www.vis.xyz/shi
 
 
 ## News
+- **[Jun 2023]** We are hosting [Challenges](https://wvcl.vis.xyz/challenges) on SHIFT at the [VCL Workshop](https://wvcl.vis.xyz/), ICCV 2023. 
 - **[Feb 2023]** Reference data loaders for PyTorch and mmdet are released! ([examples](https://github.com/SysCV/shift-dev/blob/main/examples))
 - **[Sept 2022]** We released visualization scripts for annotation and sensor pose (issue https://github.com/SysCV/shift-dev/issues/6).
 - **[June 2022]** We released the DevKit repo!

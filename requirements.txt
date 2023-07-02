@@ -1,3 +1,4 @@
+appdirs==1.4.4
 h5py==3.1.0
 numpy==1.21.3
 matplotlib==3.6.3

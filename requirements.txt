@@ -1,6 +1,7 @@
+appdirs==1.4.4
 h5py==3.1.0
-matplotlib==3.3.3
-numpy==1.20.3
+numpy==1.21.3
+matplotlib==3.6.3
 opencv_python==4.5.2.54
 Pillow==9.1.1
 pydantic==1.8.2
@@ -9,4 +10,6 @@ scalabel==0.3.0
 scikit_image==0.18.3
 tqdm==4.38.0
 torch==1.13.1
-git+https://github.com/scalabel/scalabel.git
+pytest==7.4.0
+git+https://github.com/scalabel/scalabel.git@v0.3.0
+

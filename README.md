@@ -188,6 +188,13 @@ This command will render an MP4 video with the bounding boxes or instance masks 
 </details>
 
 
+## Resources
+
+You can find some helpful repos based on the SHIFT dataset below! Please don't hesitate to contact us to include your repos.
+- **Test-time adaptation for object detection** [SysCV/shift-detection-tta](https://github.com/SysCV/shift-detection-tta), thanks [@Mattia Segu](https://github.com/mattiasegu)!
+- **Test-time adaptation for semantic segmentation** [zwbx/SHIFT-Continuous_Test_Time_Adaptation](https://github.com/zwbx/SHIFT-Continuous_Test_Time_Adaptation/), thanks [@Wenbo Zhang](https://github.com/zwbx)!
+- **3D object detection** [leaf1170124460/Mask3D-SHIFT](https://github.com/leaf1170124460/Mask3D-SHIFT), thanks [@Chengxiang Fan](https://github.com/leaf1170124460)!
+
 ## Citation
 
 The SHIFT Dataset is made freely available to academic and non-academic entities for research purposes such as academic research, teaching, scientific publications, or personal experimentation. If you use our dataset, we kindly ask you to cite our paper as:
